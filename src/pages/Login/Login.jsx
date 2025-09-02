@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-// import { useAuth } from "../../auth/useAuth";
-// //import { useEffect } from "react";
+import { useAuth } from "../../auth/useAuth";
+//import { useEffect } from "react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,7 +11,7 @@ export default function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-//   const { login } = useAuth();
+  const { login } = useAuth();
 
 //   useEffect(() => {
 //   if (isAuthenticated) {
