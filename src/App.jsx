@@ -3,8 +3,8 @@ import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute"; // opcional
 
-import Login from "./Pages/Login/Login";
-import Cadastro from "./Pages/Cadastro/Cadastro";
+import Login from "./pages/Login/Login";
+import Cadastro from "./pages/Cadastro/Cadastro";
 //import Agenda from "./Pages/Agenda/Agenda";
 // importe outras páginas privadas quando criar
 // import Clientes from "./Pages/Clientes/Clientes";
