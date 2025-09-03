@@ -1,35 +1,46 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import AuthProvider from "./auth/AuthProvider";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicOnlyRoute from "./routes/PublicOnlyRoute"; // opcional
 
-function App() {
-  const [count, setCount] = useState(0)
+import Login from "./Pages/Login/Login";
+import Cadastro from "./Pages/Cadastro/Cadastro";
+//import Agenda from "./Pages/Agenda/Agenda";
+// importe outras páginas privadas quando criar
+// import Clientes from "./Pages/Clientes/Clientes";
+// import Dashboard from "./Pages/Dashboard/Dashboard";
 
+export default function App() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* raiz manda pro login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-export default App
+          {/* públicas */}
+          <Route
+            path="/login"
+            element={
+              <PublicOnlyRoute>
+                <Login />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/cadastro"
+            element={
+              <PublicOnlyRoute>
+                <Cadastro />
+              </PublicOnlyRoute>
+            }
+          />
+
+
+          {/* fallback */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
+  );
+}
