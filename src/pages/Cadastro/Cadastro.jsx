@@ -37,6 +37,14 @@ export default function Cadastro() {
     setSuccess("");
   };
 
+  // ✅ Função para formatar e validar o telefone
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    const limitedValue = value.slice(0, 11);
+    setForm((prev) => ({ ...prev, contato: limitedValue }));
+    setErrors((prev) => ({ ...prev, contato: "" }));
+  };
+
   const validate = () => {
     const errs = {};
     if (!form.nome.trim()) errs.nome = "Informe o nome.";
@@ -54,10 +62,50 @@ export default function Cadastro() {
 
     // Mantive sua regra: 11 (CPF) OU 14 (CNPJ).
     // Se quiser forçar só CPF (11), troque a condição.
+    
+    // ✅ Validação de nome: apenas letras e espaços, mínimo 2 caracteres
+    if (!form.nome.trim()) {
+      errs.nome = "Informe o nome.";
+    } else if (!/^[a-zA-ZÀ-ÿ\s]{2,}$/.test(form.nome)) {
+      errs.nome = "Nome deve conter apenas letras (mín. 2 caracteres).";
+    }
+    
+    // ✅ Validação de sobrenome: apenas letras e espaços, mínimo 2 caracteres
+    if (!form.sobrenome.trim()) {
+      errs.sobrenome = "Informe o sobrenome.";
+    } else if (!/^[a-zA-ZÀ-ÿ\s]{2,}$/.test(form.sobrenome)) {
+      errs.sobrenome = "Sobrenome deve conter apenas letras (mín. 2 caracteres).";
+    }
+    
+    // ✅ Validação de email
+    if (!form.email.trim()) {
+      errs.email = "Informe o e-mail.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errs.email = "E-mail inválido.";
+    }
+    
+    // ✅ Validação de telefone (opcional): 10 ou 11 dígitos
+    if (form.contato && !/^[0-9]{10,11}$/.test(form.contato)) {
+      errs.contato = "Telefone inválido (10 ou 11 dígitos).";
+    }
+    
+    // ✅ Validação de senha: mínimo 6 caracteres, pelo menos 1 letra e 1 número
+    if (!form.senha) {
+      errs.senha = "Informe a senha.";
+    } else if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(form.senha)) {
+      errs.senha = "A senha deve ter pelo menos 6 caracteres, incluindo letras e números.";
+    }
+    
+    // ✅ Validação de confirmação de senha
+    if (form.senha !== form.confirmarSenha) {
+      errs.confirmarSenha = "As senhas não coincidem.";
+    }
+    
+    // ✅ Validação de documento: 11 (CPF) ou 14 (CNPJ) dígitos
     if (!form.documento.trim()) {
       errs.documento = "Informe o CPF ou CNPJ.";
-    } else if (form.documento.length !== 11 && form.documento.length !== 14) {
-      errs.documento = "O documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos.";
+    } else if (!/(^\d{11}$)|(^\d{14}$)/.test(form.documento)) {
+      errs.documento = "Documento inválido (11 dígitos para CPF ou 14 para CNPJ).";
     }
 
     if (form.contato && form.contato.length < 8)
@@ -128,6 +176,15 @@ export default function Cadastro() {
                   autoComplete="given-name"
                 />
                 {errors.nome && <p className="mt-1 text-sm text-red-500">{errors.nome}</p>}
+                <input 
+                  type="text" 
+                  name="nome" 
+                  value={form.nome} 
+                  onChange={handleChange} 
+                  className={`input-field w-full px-4 py-3 rounded-lg ${errors.nome ? "border-red-600" : ""}`} 
+                  placeholder="Seu nome" 
+                />
+                {errors.nome && (<p className="mt-1 text-sm text-red-500">{errors.nome}</p>)}
               </div>
 
               <div>
@@ -142,6 +199,15 @@ export default function Cadastro() {
                   autoComplete="family-name"
                 />
                 {errors.sobrenome && <p className="mt-1 text-sm text-red-500">{errors.sobrenome}</p>}
+                <input 
+                  type="text" 
+                  name="sobrenome" 
+                  value={form.sobrenome} 
+                  onChange={handleChange} 
+                  className={`input-field w-full px-4 py-3 rounded-lg ${errors.sobrenome ? "border-red-600" : ""}`} 
+                  placeholder="Seu sobrenome"
+                />
+                {errors.sobrenome && (<p className="mt-1 text-sm text-red-500">{errors.sobrenome}</p>)}
               </div>
             </div>
 
@@ -225,7 +291,66 @@ export default function Cadastro() {
             <div className="text-left">
               <button
                 type="button"
-                onClick={() => setShowPass((s) => !s)}
+                onClick={() => setShowPass((s) => !s)}/>
+              <input 
+                type="text" 
+                name="contato" 
+                value={form.contato} 
+                onChange={handlePhoneChange} 
+                className={`input-field w-full px-4 py-3 rounded-lg ${errors.contato ? "border-red-600" : ""}`} 
+                placeholder="Apenas números com DDD"
+                inputMode="numeric"
+              />
+              
+              {errors.contato && (<p className="mt-1 text-sm text-red-500">{errors.contato}</p>)}
+            </div>
+            
+            {/* Email */}
+            <div>
+              <label className="block text-left text-sm font-medium text-white mb-2">E-mail</label>
+              <input 
+                type="email" 
+                name="email" 
+                value={form.email} 
+                onChange={handleChange} 
+                className={`input-field w-full px-4 py-3 rounded-lg ${errors.email ? "border-red-600" : ""}`} 
+                placeholder="seu@email.com"
+              />
+              {errors.email && (<p className="mt-1 text-sm text-red-500">{errors.email}</p>)}
+            </div>
+            
+            {/* Senha */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Senha</label>
+              <input 
+                type={showPass ? "text" : "password"} 
+                name="senha" 
+                value={form.senha} 
+                onChange={handleChange} 
+                className={`input-field w-full px-4 py-3 rounded-lg ${errors.senha ? "border-red-600" : ""}`} 
+                placeholder="Crie uma senha"
+              />
+              {errors.senha && (<p className="mt-1 text-sm text-red-500">{errors.senha}</p>)}
+            </div>
+            
+            {/* Confirmar Senha */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Confirmar Senha</label>
+              <input 
+                type={showPass ? "text" : "password"} 
+                name="confirmarSenha" 
+                value={form.confirmarSenha} 
+                onChange={handleChange} 
+                className={`input-field w-full px-4 py-3 rounded-lg ${errors.confirmarSenha ? "border-red-600" : ""}`} 
+                placeholder="Confirme sua senha"
+              />
+              {errors.confirmarSenha && (<p className="mt-1 text-sm text-red-500">{errors.confirmarSenha}</p>)}
+            </div>
+            
+            <div className="text-left">
+              <button 
+                type="button" 
+                onClick={() => setShowPass((s) => !s)} 
                 className="text-sm text-gray-300 hover:text-white"
               >
                 {showPass ? "Ocultar senhas" : "Mostrar senhas"}
@@ -244,6 +369,15 @@ export default function Cadastro() {
             {/* Feedback */}
             {submitError && <div className="mt-2 text-sm text-red-400">{submitError}</div>}
             {success && <div className="mt-2 text-sm text-green-400">{success}</div>}
+            
+            <button 
+              type="submit" 
+              className="btn-primary w-full py-3 rounded-lg font-semibold text-base"
+            >
+              Criar conta
+            </button>
+            
+            {success && (<div className="mt-2 text-sm text-green-400">{success}</div>)}
           </form>
         </div>
       </div>
