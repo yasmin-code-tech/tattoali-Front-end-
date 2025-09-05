@@ -41,7 +41,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Cabeçalho */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Gestor TattoAli</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Gestor TattooAli</h1>
           <p className="text-gray-400">Plataforma de gestão profissional</p>
         </div>
 
