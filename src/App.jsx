@@ -5,7 +5,8 @@ import PublicOnlyRoute from "./routes/PublicOnlyRoute"; // opcional
 
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
-//import Agenda from "./Pages/Agenda/Agenda";
+
+import Agenda from "./Pages/Agenda/Agenda";
 // importe outras páginas privadas quando criar
 // import Clientes from "./Pages/Clientes/Clientes";
 // import Dashboard from "./Pages/Dashboard/Dashboard";
@@ -35,6 +36,13 @@ export default function App() {
               </PublicOnlyRoute>
             }
           />
+          {/* grupo de PRIVADAS */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/agenda" element={<Agenda />} />
+            {/* adicione privadas aqui */}
+            {/* <Route path="/clientes" element={<Clientes />} /> */}
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          </Route>
 
 
           {/* fallback */}

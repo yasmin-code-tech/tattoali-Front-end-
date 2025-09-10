@@ -54,59 +54,59 @@ export default function AuthProvider({ children }) {
 }
 
   // src/auth/AuthProvider.jsx (trecho do login)
-async function login({ email, password }) {
-  try {
-    // ⚠️ seu back recebe 'senha'
-    const res = await axios.post("http://localhost:3000/api/user/login", {
-      email,
-      senha: password,
-    });
+// async function login({ email, password }) {
+//   try {
+//     // ⚠️ seu back recebe 'senha'
+//     const res = await axios.post("http://localhost:3000/api/user/login", {
+//       email,
+//       senha: password,
+//     });
 
-    // 🔎 tente várias chaves comuns / formatos aninhados
-    const jwt =
-      res.data?.token ??
-      res.data?.accessToken ??
-      res.data?.jwt ??
-      res.data?.data?.token ??
-      res.data?.data?.accessToken ??
-      res.data?.data?.jwt;
+//     // 🔎 tente várias chaves comuns / formatos aninhados
+//     const jwt =
+//       res.data?.token ??
+//       res.data?.accessToken ??
+//       res.data?.jwt ??
+//       res.data?.data?.token ??
+//       res.data?.data?.accessToken ??
+//       res.data?.data?.jwt;
 
-    if (!jwt) {
-      // não salva nada se não houver token; loga p/ inspecionar a resposta
-      console.log("[Auth] login response sem token:", res.data);
-      throw new Error("Token não retornado pelo servidor.");
-    }
+//     if (!jwt) {
+//       // não salva nada se não houver token; loga p/ inspecionar a resposta
+//       console.log("[Auth] login response sem token:", res.data);
+//       throw new Error("Token não retornado pelo servidor.");
+//     }
 
-    localStorage.setItem("authToken", jwt);
-    axios.defaults.headers.common.Authorization = `Bearer ${jwt}`;
+//     localStorage.setItem("authToken", jwt);
+//     axios.defaults.headers.common.Authorization = `Bearer ${jwt}`;
 
-    setToken(jwt);
-    // opcional:
-    // const me = await axios.get("http://localhost:3000/api/user/me");
-    // setUser(me.data);
+//     setToken(jwt);
+//     // opcional:
+//     // const me = await axios.get("http://localhost:3000/api/user/me");
+//     // setUser(me.data);
 
-    navigate("/agenda", { replace: true });
-  } catch (err) {
-    // garante que não fica lixo no storage se falhar
-    localStorage.removeItem("authToken");
-    delete axios.defaults.headers.common.Authorization;
+//     navigate("/agenda", { replace: true });
+//   } catch (err) {
+//     // garante que não fica lixo no storage se falhar
+//     localStorage.removeItem("authToken");
+//     delete axios.defaults.headers.common.Authorization;
 
-    const msg = err?.response?.data?.message || err.message || "Falha no login.";
-    console.error("[Auth] erro no login:", err);
-    throw new Error(msg);
-  }
-}
+//     const msg = err?.response?.data?.message || err.message || "Falha no login.";
+//     console.error("[Auth] erro no login:", err);
+//     throw new Error(msg);
+//   }
+// }
 
 
 
   // MOCK de login (troque por chamada real quando tiver backend)
-  // async function loginMock() {
-  //   const fake = "fake-token-123";
-  //   localStorage.setItem("authToken", fake);
-  //   setToken(fake);
-  //   axios.defaults.headers.common.Authorization = `Bearer ${fake}`;
-  //   navigate("/agenda", { replace: true });
-  // }
+   async function loginMock() {
+     const fake = "fake-token-123";
+    localStorage.setItem("authToken", fake);
+   setToken(fake);
+   axios.defaults.headers.common.Authorization = `Bearer ${fake}`;
+    navigate("/agenda", { replace: true });
+  }
 
   function logout() {
     localStorage.removeItem("authToken");
@@ -120,8 +120,8 @@ async function login({ email, password }) {
     token,
     user,
     isBooting,
-    //login: loginMock,
-    login,
+    login: loginMock,
+    // login,
     logout,
     register,
   };
