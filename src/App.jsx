@@ -6,7 +6,7 @@ import PublicOnlyRoute from "./routes/PublicOnlyRoute"; // opcional
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
 
-import Agenda from "./Pages/Agenda/Agenda";
+import Agenda from "./pages/Agenda/Agenda";
 // importe outras páginas privadas quando criar
 // import Clientes from "./Pages/Clientes/Clientes";
 // import Dashboard from "./Pages/Dashboard/Dashboard";
