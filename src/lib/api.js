@@ -1,14 +1,20 @@
 import { loadAuth, clearAuth, saveAuth } from "../auth/auth-storage";
 
 const baseURL = import.meta?.env?.VITE_API_URL || "http://localhost:3000";
-const USE_MOCK = import.meta?.env?.VITE_USE_MOCK_AUTH === "true";
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const USE_MOCK = String(import.meta?.env?.VITE_USE_MOCK_AUTH || "").trim().toLowerCase() === "true";
+
+console.debug("[api] VITE_USE_MOCK_AUTH raw =", import.meta.env.VITE_USE_MOCK_AUTH);
+console.debug("[api] USE_MOCK computed =", USE_MOCK);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let refreshing = null;
 
 
 export async function apiFetch(path, options = {}) {
+  console.debug("[apiFetch] USE_MOCK:", USE_MOCK, "path:", path, "method:", options.method || "GET");
+
   if (USE_MOCK) {
     return mockApiFetch(path, options);
   }
