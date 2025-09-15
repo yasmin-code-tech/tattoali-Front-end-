@@ -34,3 +34,27 @@ Este projeto utiliza **Node.js v20.19.0**.
 ```bash
 nvm use
 
+## Ambiente / Execução
+
+Este projeto suporta **dois modos de execução**:
+Este projeto usa cross-env para configurar variáveis de ambiente nos scripts.
+O pacote já está listado no package.json, portanto todos os membros da equipe só precisam rodar após dar o pull
+    `
+    ``bash
+    npm install 
+
+---
+
+### 🔹 1) Modo Mock (sem backend)
+Utiliza respostas simuladas direto no front (útil para desenvolvimento rápido sem precisar do backend rodando).
+
+- Variável de ambiente: `VITE_USE_MOCK_AUTH=true`
+- Script:
+  ```bash
+  npm run dev:mock
+
+### 🔹 2) Modo Mock (com backend)
+    - Variável de ambiente: `VITE_API_URL=http://localhost:3000`
+    - Script:
+  ```bash
+  npm run dev:real
