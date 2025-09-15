@@ -1,13 +1,11 @@
 // src/auth/AuthProvider.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { AuthContext } from "./context";
 
-
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
-});
+// ✅ usa seu cliente centralizado e o storage unificado
+import { api } from "../lib/api";
+import { loadAuth, saveAuth, clearAuth } from "./auth-storage";
 
 export default function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
@@ -15,102 +13,91 @@ export default function AuthProvider({ children }) {
   const [isBooting, setIsBooting] = useState(true);
   const navigate = useNavigate();
 
-  // Hidrata token do localStorage ao iniciar o app
+  // Hidrata sessão ao iniciar o app
   useEffect(() => {
-    const t = localStorage.getItem("authToken");
-    if (t) {
-      setToken(t);
-      axios.defaults.headers.common.Authorization = `Bearer ${t}`;
-      // opcional: buscar /me e setar user aqui
+    const auth = loadAuth(); 
+    if (auth?.token) {
+      setToken(auth.token);
+      setUser(auth.user || null);
     }
     setIsBooting(false);
   }, []);
 
+  // LOGIN via lib/api
+  async function login({ email, password }) {
+    try {
+      const data = await api.post("/api/user/login", { email, senha: password });
+
+      const jwt =
+        data?.token ||
+        data?.accessToken ||
+        data?.jwt ||
+        data?.data?.token ||
+        data?.data?.accessToken ||
+        data?.data?.jwt;
+
+      if (!jwt) {
+        console.log("[Auth] login: resposta sem token:", data);
+        throw new Error("Token não retornado pelo servidor.");
+      }
+
+      const authToSave = {
+        token: jwt,
+        refreshToken: data?.refreshToken,
+        user: data?.user || null,
+      };
+      saveAuth(authToSave);
+
+      setToken(jwt);
+      setUser(authToSave.user);
+      navigate("/agenda", { replace: true });
+    } catch (err) {
+      clearAuth();
+      const msg =
+        err?.data?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Falha no login.";
+      console.error("[Auth] erro no login:", err);
+      throw new Error(msg);
+    }
+  }
+
+  // REGISTER via lib/api
   async function register({ nome, sobrenome, cpf, email, password, telefone }) {
-  try {
-    const res = await axios.post("http://localhost:3000/api/user/register", {
-      nome,
-      sobrenome,
-      cpf,
-      email,
-      senha: password,   // 👈 o back espera "senha"
-      telefone,          // 👈 opcional
-    });
+    try {
+      const body = {
+        nome,
+        sobrenome,
+        cpf,
+        email,
+        senha: password,              
+        ...(telefone ? { telefone } : {}),
+      };
 
-    // se o back retornar mensagem de sucesso
-    if (res.data?.message) {
-      console.log(res.data.message);
+      const res = await api.post("/api/user/register", body);
+
+      if (!res?.message) {
+        console.log("[Auth] register: resposta inesperada:", res);
+      }
+
       navigate("/login", { replace: true });
+      return res;
+    } catch (err) {
+      const msg =
+        err?.data?.error ||
+        err?.data?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Falha no registro.";
+      console.error("[Auth] erro no registro:", err);
+      throw new Error(msg);
     }
-  } catch (err) {
-    console.error("[Auth] erro no registro", err);
-    const msg =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      err.message ||
-      "Falha no registro.";
-    throw new Error(msg);
   }
-}
-
-  // src/auth/AuthProvider.jsx (trecho do login)
-async function login({ email, password }) {
-  try {
-    // ⚠️ seu back recebe 'senha'
-    const res = await axios.post("http://localhost:3000/api/user/login", {
-      email,
-      senha: password,
-    });
-
-    // 🔎 tente várias chaves comuns / formatos aninhados
-    const jwt =
-      res.data?.token ??
-      res.data?.accessToken ??
-      res.data?.jwt ??
-      res.data?.data?.token ??
-      res.data?.data?.accessToken ??
-      res.data?.data?.jwt;
-
-    if (!jwt) {
-      // não salva nada se não houver token; loga p/ inspecionar a resposta
-      console.log("[Auth] login response sem token:", res.data);
-      throw new Error("Token não retornado pelo servidor.");
-    }
-
-    localStorage.setItem("authToken", jwt);
-    axios.defaults.headers.common.Authorization = `Bearer ${jwt}`;
-
-    setToken(jwt);
-    // opcional:
-    // const me = await axios.get("http://localhost:3000/api/user/me");
-    // setUser(me.data);
-
-    navigate("/agenda", { replace: true });
-  } catch (err) {
-    // garante que não fica lixo no storage se falhar
-    localStorage.removeItem("authToken");
-    delete axios.defaults.headers.common.Authorization;
-
-    const msg = err?.response?.data?.message || err.message || "Falha no login.";
-    console.error("[Auth] erro no login:", err);
-    throw new Error(msg);
-  }
-}
-
-
-
-  // MOCK de login (troque por chamada real quando tiver backend)
-  // async function loginMock() {
-  //   const fake = "fake-token-123";
-  //   localStorage.setItem("authToken", fake);
-  //   setToken(fake);
-  //   axios.defaults.headers.common.Authorization = `Bearer ${fake}`;
-  //   navigate("/agenda", { replace: true });
-  // }
 
   function logout() {
-    localStorage.removeItem("authToken");
-    delete axios.defaults.headers.common.Authorization;
+    clearAuth();
     setUser(null);
     setToken(null);
     navigate("/login", { replace: true });
@@ -120,10 +107,9 @@ async function login({ email, password }) {
     token,
     user,
     isBooting,
-    //login: loginMock,
     login,
-    logout,
     register,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

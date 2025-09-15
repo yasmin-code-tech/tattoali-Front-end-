@@ -1,41 +1,136 @@
-// src/lib/api.js
-import { loadAuth, clearAuth } from "../auth/auth-storage";
+import { loadAuth, clearAuth, saveAuth } from "../auth/auth-storage";
 
-const baseURL = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:3000";
+const baseURL = import.meta?.env?.VITE_API_URL || "http://localhost:3000";
 const USE_MOCK = import.meta?.env?.VITE_USE_MOCK_AUTH === "true";
-
-console.log("[api] USE_MOCK =", USE_MOCK);
-console.log("[api] VITE_USE_MOCK_AUTH =", import.meta.env.VITE_USE_MOCK_AUTH);
- // deve imprimir true quando o mock estiver ON
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+
+let refreshing = null;
+
 
 export async function apiFetch(path, options = {}) {
   if (USE_MOCK) {
     return mockApiFetch(path, options);
   }
 
-  // --- modo real (quando tiver backend) ---
-  const auth = loadAuth();
+  const url = path.startsWith("http") ? path : baseURL + path;
+
+ 
   const headers = new Headers(options.headers || {});
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type") && options.body && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  
+  const auth = loadAuth(); // { token, refreshToken, user? }
   if (auth?.token) headers.set("Authorization", `Bearer ${auth.token}`);
 
-  const res = await fetch(baseURL + path, { ...options, headers });
 
-  if (res.status === 401) clearAuth();
+  const init = {
+    method: options.method || "GET",
+    headers,
+    body:
+      options.body instanceof FormData
+        ? options.body
+        : options.body && typeof options.body !== "string"
+          ? JSON.stringify(options.body)
+          : options.body,
+    signal: options.signal,
+  };
 
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  let res = await fetch(url, init);
+  if (res.status === 401 && auth?.refreshToken) {
+    try {
+      await ensureRefreshToken(auth.refreshToken);
+      const newAuth = loadAuth();
+      const retryHeaders = new Headers(headers);
+      if (newAuth?.token) retryHeaders.set("Authorization", `Bearer ${newAuth.token}`);
+      res = await fetch(url, { ...init, headers: retryHeaders });
+    } catch {
+      clearAuth();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      throw await toApiError(res);
+    }
+  }
+
 
   if (!res.ok) {
-    const err = new Error(data?.message || "Erro na requisição");
-    err.status = res.status;
-    err.data = data;
-    throw err;
+    throw await toApiError(res);
   }
-  return data;
+  return await parseBody(res);
+}
+
+export const api = {
+  get: (p, opt) => apiFetch(p, { ...opt, method: "GET" }),
+  post: (p, body, opt) => apiFetch(p, { ...opt, method: "POST", body }),
+  put: (p, body, opt) => apiFetch(p, { ...opt, method: "PUT", body }),
+  patch: (p, body, opt) => apiFetch(p, { ...opt, method: "PATCH", body }),
+  del: (p, opt) => apiFetch(p, { ...opt, method: "DELETE" }),
+};
+
+
+async function ensureRefreshToken(refreshToken) {
+  if (!refreshing) {
+    refreshing = doRefresh(refreshToken)
+      .catch((e) => {
+        throw e;
+      })
+      .finally(() => {
+        refreshing = null;
+      });
+  }
+  return refreshing;
+}
+
+async function doRefresh(refreshToken) {
+  const res = await fetch(baseURL + "/api/user/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!res.ok) {
+    throw await toApiError(res);
+  }
+
+  const data = await parseBody(res);
+  const newToken =
+    data?.token || data?.accessToken || data?.data?.token || data?.data?.accessToken;
+  const newRefresh = data?.refreshToken || data?.data?.refreshToken || refreshToken;
+
+  if (!newToken) {
+    throw new Error("Refresh falhou: token ausente.");
+  }
+
+  // salva no storage (você precisa expor saveAuth no auth-storage)
+  const current = loadAuth() || {};
+  saveAuth({ ...current, token: newToken, refreshToken: newRefresh });
+  return newToken;
+}
+
+/**
+ * Parse genérico de corpo (json/text)
+ */
+async function parseBody(res) {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return text;
+  }
+}
+
+/**
+ * Converte Response em Error com status e data
+ */
+async function toApiError(res) {
+  const body = await parseBody(res);
+  const err = new Error(body?.message || body?.error ||`HTTP ${res.status}`);
+  err.status = res.status;
+  err.data = body;
+  return err;
 }
 
 /** -------------------- MOCKS -------------------- **/
@@ -45,25 +140,24 @@ async function mockApiFetch(path, options = {}) {
   const method = (options.method || "GET").toUpperCase();
   const auth = loadAuth();
 
-  if (path === "/auth/login" && method === "POST") {
+  // ajuste paths mockados conforme seus componentes
+  if ((path === "/auth/login" || path === "/api/user/login") && method === "POST") {
     const body = safeParse(options.body) || {};
     const email = body.email || "demo@tattooali.com";
-    const name = email.split("@")[0];
-
-    if (!body.password || String(body.password).length < 3) {
+    if (!body.senha || String(body.senha).length < 3) {
       const err = new Error("Credenciais inválidas (mock)");
       err.status = 401;
       err.data = { message: "Credenciais inválidas (mock)" };
       throw err;
     }
-
     return {
       token: "mock-token-123",
-      user: { id: "1", name: capitalize(name), email },
+      refreshToken: "mock-refresh-456",
+      user: { id: "1", name: email.split("@")[0], email },
     };
   }
 
-  if (path === "/auth/me" && method === "GET") {
+  if ((path === "/auth/me" || path === "/api/user/me") && method === "GET") {
     if (!auth?.token) {
       const err = new Error("Não autenticado (mock)");
       err.status = 401;
@@ -73,12 +167,18 @@ async function mockApiFetch(path, options = {}) {
     return auth.user || { id: "1", name: "Tatuador", email: "demo@tattooali.com" };
   }
 
+  if ((path === "/auth/refresh" || path === "/api/user/refresh") && method === "POST") {
+    return { token: "mock-token-123-refreshed", refreshToken: "mock-refresh-456" };
+  }
+
   return null;
 }
 
 function safeParse(x) {
-  try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; }
-}
-function capitalize(s) {
-  return (s || "").charAt(0).toUpperCase() + (s || "").slice(1);
+  try {
+    if (x instanceof FormData) return null;
+    return typeof x === "string" ? JSON.parse(x) : x;
+  } catch {
+    return null;
+  }
 }
