@@ -1,15 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import PublicOnlyRoute from "./routes/PublicOnlyRoute"; // opcional
+import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
-
 import Agenda from "./pages/Agenda/Agenda";
-// importe outras páginas privadas quando criar
-// import Clientes from "./Pages/Clientes/Clientes";
-// import Dashboard from "./Pages/Dashboard/Dashboard";
+import Perfil from "./pages/Perfil/Perfil";
 
 export default function App() {
   return (
@@ -36,14 +33,16 @@ export default function App() {
               </PublicOnlyRoute>
             }
           />
+          
           {/* grupo de PRIVADAS */}
           <Route element={<ProtectedRoute />}>
             <Route path="/agenda" element={<Agenda />} />
-            {/* adicione privadas aqui */}
+            <Route path="/perfil" element={<Perfil />} />
+            
+            {/* adicione outras privadas aqui no futuro */}
             {/* <Route path="/clientes" element={<Clientes />} /> */}
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           </Route>
-
 
           {/* fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
