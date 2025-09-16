@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 
 import Layout from '../../baselayout/Layout'
 import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../services/agendaService'
-import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
-import ModalClienteExistente from '../../components/ModalClienteExistente'
+// import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
+// import ModalClienteExistente from '../../components/ModalClienteExistente'
 
 
 
@@ -13,8 +13,8 @@ export default function Agenda() {
   const [sessoesDoDia, setSessoesDoDia] = useState([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
-  const [modalNovoCliente, setModalNovoCliente] = useState(false);
-  const [modalClienteExistente, setModalClienteExistente] = useState(false);
+  //const [modalNovoCliente, setModalNovoCliente] = useState(false);
+  //const [modalClienteExistente, setModalClienteExistente] = useState(false);
 
   const chaveData = useMemo(() => {
     if (!dataSelecionada || isNaN(dataSelecionada.getTime())) {
@@ -113,7 +113,7 @@ export default function Agenda() {
             <p className="text-gray-400">Gerencie seus agendamentos do dia</p>
           </div>
         </div>
-
+        
         {/* Seletor de Data + Ações (input à esquerda, botões à direita) */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -261,19 +261,19 @@ export default function Agenda() {
         )}
 
         {/* Modais */}
-        <ModalAdicionarClienteNovo
+        {/* <ModalAdicionarClienteNovo
           isOpen={modalNovoCliente}
           onClose={() => setModalNovoCliente(false)}
           onSuccess={handleModalSuccess}
           dataSelecionada={chaveData}
-        />
+        /> */}
 
-        <ModalClienteExistente
+        {/* <ModalClienteExistente
           isOpen={modalClienteExistente}
           onClose={() => setModalClienteExistente(false)}
           onSuccess={handleModalSuccess}
           dataSelecionada={chaveData}
-        />
+        /> */}
       </div>
       </Layout>
     </div>
