@@ -113,7 +113,7 @@ export default function Agenda() {
             <p className="text-gray-400">Gerencie seus agendamentos do dia</p>
           </div>
         </div>
-
+        <div>Oiiiiiiiiiiiiiii</div>
         {/* Seletor de Data + Ações (input à esquerda, botões à direita) */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
