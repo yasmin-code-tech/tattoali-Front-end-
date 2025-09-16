@@ -35,7 +35,7 @@ export default function Sidebar() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Gestor</h1>
-              <p className="text-red-600 text-sm font-medium">TattoAli</p>
+              <p className="text-red-600 text-sm font-medium">TattooAli</p>
             </div>
           </div>
         </div>
