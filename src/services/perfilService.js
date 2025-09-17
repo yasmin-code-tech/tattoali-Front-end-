@@ -1,23 +1,18 @@
 const mockPerfil = {
   nome: "Alex Tattoo Artist",
   bio: "Tatuador Profissional há 8 anos",
-  plano: "Premium",
+  endereco: "Rua das Artes, 123 - Vila Madalena, São Paulo - SP",
+  instagram: "@alex.tattoos",
   especialidades: ["Realismo", "Tribal", "Floral", "Blackwork", "Aquarela"],
   contatos: {
     whatsapp: "(11) 99999-9999",
-    telefone: "(11) 3333-4444",
-    email: "alex@tattooali.com"
+    email: "alex@tattoali.com"
   },
-  avatarUrl: "https://exemplo.com/avatar.jpg" // URL da imagem de perfil
+  avatarUrl: null // ou a URL de uma imagem
 };
 
-/**
- * Busca os dados do perfil do tatuador.
- * @returns {Promise<object>} Os dados do perfil.
- */
 export const buscarPerfilTatuador = () => {
   return new Promise((resolve) => {
-    // Simula um delay de rede de 1 segundo
     setTimeout(() => {
       resolve(mockPerfil);
     }, 1000);
