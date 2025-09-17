@@ -5,7 +5,7 @@ import { buscarPerfilTatuador } from '../../services/perfilService';
 import ModalEditarPerfil from "../../components/ModalEditarPerfil";
 import ModalAlterarSenha from "../../components/ModalAlterarSenha";
 
-// SVGs como componentes para organização
+// Ícones
 const UserIcon = () => (
   <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -17,8 +17,21 @@ const WhatsAppIcon = () => (
   </svg>
 );
 const EmailIcon = () => (
-    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+const MapPinIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+);
+const InstagramIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
     </svg>
 );
 
@@ -29,13 +42,13 @@ export default function Perfil() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  // Função para carregar ou recarregar os dados do perfil
   const carregarPerfil = async () => {
     try {
       setLoading(true);
       const dados = await buscarPerfilTatuador();
       setPerfil(dados);
-    } catch (error) {     setErro("Falha ao carregar o perfil. Tente novamente mais tarde.");
+    } catch (error) {
+      setErro("Falha ao carregar o perfil. Tente novamente mais tarde.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -46,17 +59,14 @@ export default function Perfil() {
     carregarPerfil();
   }, []);
 
-  // Função chamada pelo modal de edição quando o perfil é salvo com sucesso
   const handleProfileUpdateSuccess = () => {
-    carregarPerfil(); // Recarrega os dados para exibir as informações atualizadas
+    carregarPerfil();
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-full">
-          <p className="text-white">Carregando perfil...</p>
-        </div>
+        <div className="flex justify-center items-center h-full"><p className="text-white">Carregando perfil...</p></div>
       </Layout>
     );
   }
@@ -64,9 +74,15 @@ export default function Perfil() {
   if (erro) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-full">
-          <p className="text-red-500">{erro}</p>
-        </div>
+        <div className="flex justify-center items-center h-full"><p className="text-red-500">{erro}</p></div>
+      </Layout>
+    );
+  }
+
+  if (!perfil) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-full"><p className="text-gray-400">Nenhum dado do perfil foi encontrado.</p></div>
       </Layout>
     );
   }
@@ -75,21 +91,30 @@ export default function Perfil() {
     <Layout>
       <div id="perfil-screen" className="p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Perfil do Tatuador</h1>
-            <p className="text-gray-400">Suas informações profissionais</p>
-          </div>
-
           <div className="card p-8 rounded-2xl max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <div className="w-32 h-32 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <UserIcon />
               </div>
               <div className="text-center mb-2">
-                {/* TAG PREMIUM REMOVIDA DAQUI */}
                 <h2 className="text-2xl font-bold text-white">{perfil.nome}</h2>
               </div>
-              <p className="text-gray-400">{perfil.bio}</p>
+              <p className="text-gray-400 mb-4">{perfil.bio}</p>
+              
+              <div className="mt-4 space-y-2">
+                {perfil.endereco && (
+                  <div className="flex items-center justify-center text-sm text-gray-400">
+                    <MapPinIcon />
+                    <span className="ml-2">{perfil.endereco}</span>
+                  </div>
+                )}
+                {perfil.instagram && (
+                  <div className="flex items-center justify-center text-sm text-gray-400">
+                    <InstagramIcon />
+                    <span className="ml-2">{perfil.instagram}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3 justify-center mb-8">
@@ -102,11 +127,11 @@ export default function Perfil() {
             </div>
 
             <div className="mb-8">
-              <h3 className="red-title text-lg font-semibold mb-4">Especialidades</h3>
-              <div className="flex flex-wrap gap-3">
-                {perfil.especialidades.map((especialidade) => (
-                  <span key={especialidade} className="bg-red-600 text-white px-4 py-2 rounded-full text-sm">
-                    {especialidade}
+              <h3 className="red-title text-lg font-semibold mb-4">Estilos de Tatuagem</h3>
+              <div className="flex flex-wrap">
+                {perfil.especialidades?.map((estilo) => ( // ✅ CORREÇÃO AQUI
+                  <span key={estilo} className="specialty-tag">
+                    {estilo}
                   </span>
                 ))}
               </div>
@@ -121,7 +146,8 @@ export default function Perfil() {
                   </div>
                   <div>
                     <p className="text-white font-medium">WhatsApp</p>
-                    <p className="text-gray-400">{perfil.contatos.whatsapp}</p>
+                    {/* ✅ CORREÇÃO AQUI */}
+                    <p className="text-gray-400">{perfil.contatos?.whatsapp}</p>
                   </div>
                 </div>
 
@@ -131,7 +157,8 @@ export default function Perfil() {
                   </div>
                   <div>
                     <p className="text-white font-medium">E-mail</p>
-                    <p className="text-gray-400">{perfil.contatos.email}</p>
+                    {/* ✅ CORREÇÃO AQUI */}
+                    <p className="text-gray-400">{perfil.contatos?.email}</p>
                   </div>
                 </div>
               </div>
