@@ -4,6 +4,7 @@ import Layout from '../../baselayout/Layout'
 import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../services/agendaService'
 //import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
 //import ModalMarcarSessao from '../../components/ModalMarcarSessao'
+import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
 
 
 
@@ -14,7 +15,9 @@ export default function Agenda() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
   const [modalNovoCliente, setModalNovoCliente] = useState(false);
-  const [modalClienteExistente, setModalClienteExistente] = useState(false);
+  const [modalMarcarSessao, setModalMarcarSessao] = useState(false);
+  const [modalDetalhesCliente, setModalDetalhesCliente] = useState(false);
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
 
   const chaveData = useMemo(() => {
     if (!dataSelecionada || isNaN(dataSelecionada.getTime())) {
@@ -51,8 +54,31 @@ export default function Agenda() {
     setModalNovoCliente(true);
   };
 
-  const handleAdicionarClienteExistente = () => {
-    setModalClienteExistente(true);
+  const handleMarcarSessao = () => {
+    setModalMarcarSessao(true);
+  };
+
+  const handleVerDetalhesCliente = (sessao) => {
+    // Criar objeto cliente com dados da sessão e dados adicionais simulados
+    const cliente = {
+      id: sessao.clienteId,
+      nome: sessao.clienteNome,
+      contato: sessao.clienteContato,
+      endereco: 'Endereço não informado', // Você pode buscar isso do serviço de clientes
+      observacoes: 'Observações não informadas', // Você pode buscar isso do serviço de clientes
+      sessoes: [
+        {
+          data: sessao.data,
+          numeroSessao: sessao.numeroSessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor || '0'
+        }
+      ],
+      proximasSessoes: [] // Você pode buscar isso do serviço de agenda
+    };
+    
+    setClienteSelecionado(cliente);
+    setModalDetalhesCliente(true);
   };
 
   const handleModalSuccess = (novoCliente = null) => {
@@ -172,7 +198,7 @@ export default function Agenda() {
                 Adicionar Cliente
               </button>
               <button
-                onClick={handleAdicionarClienteExistente}
+                onClick={handleMarcarSessao}
                 className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium text-sm inline-flex items-center justify-center w-full sm:w-48 lg:w-60"
               >
                 
@@ -221,7 +247,7 @@ export default function Agenda() {
                 Adicionar Cliente
               </button>
               <button
-                onClick={handleAdicionarClienteExistente}
+                onClick={handleMarcarSessao}
                 className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium w-full sm:w-48 lg:w-52"
               >
                 Marcar Sessão
@@ -248,6 +274,12 @@ export default function Agenda() {
 
                 <div className="flex items-center gap-2 md:gap-3 self-stretch md:self-auto">
                   <button
+                    onClick={() => handleVerDetalhesCliente(sessao)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto transition-colors"
+                  >
+                    Ver Detalhes
+                  </button>
+                  <button
                     onClick={() => handleSessaoRealizadaPorCliente(sessao)}
                     className="btn-primary px-4 py-2 rounded-lg font-semibold w-full sm:w-auto"
                   >
@@ -273,11 +305,20 @@ export default function Agenda() {
         />
 
         <ModalMarcarSessao
-          isOpen={modalClienteExistente}
-          onClose={() => setModalClienteExistente(false)}
+          isOpen={modalMarcarSessao}
+          onClose={() => setModalMarcarSessao(false)}
           onSuccess={handleModalSuccess}
           dataSelecionada={chaveData}
         /> */}
+
+        <ModalDetalhesCliente
+          isOpen={modalDetalhesCliente}
+          onClose={() => setModalDetalhesCliente(false)}
+          cliente={clienteSelecionado}
+          onEditClient={(cliente) => {
+            console.log('Editar cliente:', cliente);
+          }}
+        />
       </div>
       </Layout>
     </div>
