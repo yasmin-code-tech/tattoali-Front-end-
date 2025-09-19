@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 
 import Layout from '../../baselayout/Layout'
 import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../services/agendaService'
-// import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
-// import ModalClienteExistente from '../../components/ModalClienteExistente'
+//import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
+//import ModalMarcarSessao from '../../components/ModalMarcarSessao'
 
 
 
@@ -13,8 +13,8 @@ export default function Agenda() {
   const [sessoesDoDia, setSessoesDoDia] = useState([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null);
-  //const [modalNovoCliente, setModalNovoCliente] = useState(false);
-  //const [modalClienteExistente, setModalClienteExistente] = useState(false);
+  const [modalNovoCliente, setModalNovoCliente] = useState(false);
+  const [modalClienteExistente, setModalClienteExistente] = useState(false);
 
   const chaveData = useMemo(() => {
     if (!dataSelecionada || isNaN(dataSelecionada.getTime())) {
@@ -55,7 +55,12 @@ export default function Agenda() {
     setModalClienteExistente(true);
   };
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = (novoCliente = null) => {
+    if (novoCliente) {
+      console.log('Novo cliente cadastrado:', novoCliente);
+      // Aqui você pode adicionar lógica adicional se necessário
+      // Por exemplo, mostrar uma mensagem de sucesso ou abrir automaticamente o modal de marcar sessão
+    }
     carregarAgendaDoDia(chaveData);
   };
 
@@ -171,7 +176,7 @@ export default function Agenda() {
                 className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium text-sm inline-flex items-center justify-center w-full sm:w-48 lg:w-60"
               >
                 
-                Adicionar Cliente existente
+                Marcar Sessão
               </button>
             </div>
           </div>
@@ -219,7 +224,7 @@ export default function Agenda() {
                 onClick={handleAdicionarClienteExistente}
                 className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium w-full sm:w-48 lg:w-52"
               >
-                Adicionar Cliente existente
+                Marcar Sessão
               </button>
             </div>
           </div>
@@ -260,15 +265,14 @@ export default function Agenda() {
           </div>
         )}
 
-        {/* Modais */}
+      
         {/* <ModalAdicionarClienteNovo
           isOpen={modalNovoCliente}
           onClose={() => setModalNovoCliente(false)}
           onSuccess={handleModalSuccess}
-          dataSelecionada={chaveData}
-        /> */}
+        />
 
-        {/* <ModalClienteExistente
+        <ModalMarcarSessao
           isOpen={modalClienteExistente}
           onClose={() => setModalClienteExistente(false)}
           onSuccess={handleModalSuccess}
