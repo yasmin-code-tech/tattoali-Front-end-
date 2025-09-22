@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import Layout from '../../baselayout/Layout'
 import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../services/agendaService'
 //import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
-//import ModalMarcarSessao from '../../components/ModalMarcarSessao'
+import ModalMarcarSessao from "../../components/ModalMarcarSessao";
 import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 
@@ -317,6 +317,24 @@ export default function Agenda() {
           onClose={() => setModalNovoCliente(false)}
           onSave={(novoCliente) => handleModalSuccess(novoCliente)}
         />
+
+        <ModalMarcarSessao
+          isOpen={modalMarcarSessao}
+          onClose={() => setModalMarcarSessao(false)}
+          onSave={(novaSessao) => {
+            console.log("Sessão marcada:", novaSessao);
+            handleModalSuccess();
+          }}
+          buscarClientes={async (nome) => {
+            // Aqui você chama sua API ou service para buscar no DB
+            // Exemplo mockado:
+            return [
+              { id: "1", nome: "João da Silva" },
+              { id: "2", nome: "Maria Souza" },
+            ].filter(c => c.nome.toLowerCase().includes(nome.toLowerCase()));
+          }}
+        />
+
 
 
         <ModalDetalhesCliente
