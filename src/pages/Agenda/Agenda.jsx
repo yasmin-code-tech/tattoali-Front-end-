@@ -5,6 +5,7 @@ import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../
 //import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
 //import ModalMarcarSessao from '../../components/ModalMarcarSessao'
 import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 
 
 
@@ -310,6 +311,13 @@ export default function Agenda() {
           onSuccess={handleModalSuccess}
           dataSelecionada={chaveData}
         /> */}
+
+        <ModalCadastrarCliente
+          isOpen={modalNovoCliente}
+          onClose={() => setModalNovoCliente(false)}
+          onSave={(novoCliente) => handleModalSuccess(novoCliente)}
+        />
+
 
         <ModalDetalhesCliente
           isOpen={modalDetalhesCliente}
