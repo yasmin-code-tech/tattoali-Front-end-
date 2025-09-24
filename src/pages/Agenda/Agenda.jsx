@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
-
 import Layout from '../../baselayout/Layout'
-import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao } from '../../services/agendaService'
-//import ModalAdicionarClienteNovo from '../../components/ModalAdicionarClienteNovo'
+import { buscarAgendaDoDia, marcarSessaoRealizada, cancelarSessao, buscarProximasSessoesCliente } from '../../services/agendaService'
 import ModalMarcarSessao from "../../components/ModalMarcarSessao";
 import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
@@ -59,34 +57,41 @@ export default function Agenda() {
     setModalMarcarSessao(true);
   };
 
-  const handleVerDetalhesCliente = (sessao) => {
-    // Criar objeto cliente com dados da sessão e dados adicionais simulados
-    const cliente = {
-      id: sessao.clienteId,
-      nome: sessao.clienteNome,
-      contato: sessao.clienteContato,
-      endereco: 'Endereço não informado', // Você pode buscar isso do serviço de clientes
-      observacoes: 'Observações não informadas', // Você pode buscar isso do serviço de clientes
-      sessoes: [
-        {
-          data: sessao.data,
-          numeroSessao: sessao.numeroSessao,
-          descricao: sessao.descricao,
-          valor: sessao.valor || '0'
-        }
-      ],
-      proximasSessoes: [] // Você pode buscar isso do serviço de agenda
-    };
-    
-    setClienteSelecionado(cliente);
-    setModalDetalhesCliente(true);
+  const handleVerDetalhesCliente = async (sessao) => {
+    try {
+      // Buscar próximas sessões do cliente
+      const proximasSessoes = await buscarProximasSessoesCliente(sessao.clienteId);
+      
+      // Criar objeto cliente com dados da sessão e próximas sessões
+      const cliente = {
+        id: sessao.clienteId,
+        nome: sessao.clienteNome,
+        contato: sessao.clienteContato,
+        endereco: 'Endereço não informado',
+        observacoes: 'Observações não informadas',
+        sessoes: [
+          {
+            data: sessao.data,
+            numeroSessao: sessao.numeroSessao,
+            descricao: sessao.descricao,
+            valor: sessao.valor || '0'
+          }
+        ],
+        proximasSessoes: proximasSessoes
+      };
+      
+      setClienteSelecionado(cliente);
+      setModalDetalhesCliente(true);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do cliente:', error);
+      setErro('Falha ao carregar detalhes do cliente');
+    }
   };
 
   const handleModalSuccess = (novoCliente = null) => {
     if (novoCliente) {
       console.log('Novo cliente cadastrado:', novoCliente);
-      // Aqui você pode adicionar lógica adicional se necessário
-      // Por exemplo, mostrar uma mensagem de sucesso ou abrir automaticamente o modal de marcar sessão
+      
     }
     carregarAgendaDoDia(chaveData);
   };
@@ -299,19 +304,7 @@ export default function Agenda() {
         )}
 
       
-        {/* <ModalAdicionarClienteNovo
-          isOpen={modalNovoCliente}
-          onClose={() => setModalNovoCliente(false)}
-          onSuccess={handleModalSuccess}
-        />
-
-        <ModalMarcarSessao
-          isOpen={modalMarcarSessao}
-          onClose={() => setModalMarcarSessao(false)}
-          onSuccess={handleModalSuccess}
-          dataSelecionada={chaveData}
-        /> */}
-
+        
         <ModalCadastrarCliente
           isOpen={modalNovoCliente}
           onClose={() => setModalNovoCliente(false)}
@@ -321,20 +314,9 @@ export default function Agenda() {
         <ModalMarcarSessao
           isOpen={modalMarcarSessao}
           onClose={() => setModalMarcarSessao(false)}
-          onSave={(novaSessao) => {
-            console.log("Sessão marcada:", novaSessao);
-            handleModalSuccess();
-          }}
-          buscarClientes={async (nome) => {
-            // Aqui você chama sua API ou service para buscar no DB
-            // Exemplo mockado:
-            return [
-              { id: "1", nome: "João da Silva" },
-              { id: "2", nome: "Maria Souza" },
-            ].filter(c => c.nome.toLowerCase().includes(nome.toLowerCase()));
-          }}
+          onSuccess={handleModalSuccess}
+          dataSelecionada={chaveData}
         />
-
 
 
         <ModalDetalhesCliente
