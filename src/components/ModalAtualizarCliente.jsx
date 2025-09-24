@@ -7,7 +7,6 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
   const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
-  // Preenche os campos com os dados atuais do cliente quando o modal abrir
   useEffect(() => {
     if (cliente) {
       setNome(cliente.nome || '');
@@ -59,6 +58,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
+              placeholder="Digite o nome do cliente"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
             />
           </div>
@@ -69,6 +69,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               type="text"
               value={contato}
               onChange={(e) => setContato(e.target.value)}
+              placeholder="Digite o telefone ou e-mail do cliente"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
             />
           </div>
@@ -79,6 +80,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               type="text"
               value={endereco}
               onChange={(e) => setEndereco(e.target.value)}
+              placeholder="Digite o endereço completo"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
             />
           </div>
@@ -88,6 +90,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descreva o serviço ou observação principal"
               rows="3"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
             />
@@ -98,6 +101,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
+              placeholder="Adicione observações adicionais"
               rows="3"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
             />
