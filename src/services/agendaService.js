@@ -166,3 +166,46 @@ export const buscarEstatisticasAgenda = async (dataInicio, dataFim) => {
     throw new Error('Falha ao carregar estatísticas da agenda');
   }
 };
+
+/**
+ * Busca próximas sessões de um cliente específico
+ * @param {string} clienteId - ID do cliente
+ * @returns {Promise<Array>} Lista de próximas sessões do cliente
+ */
+export const buscarProximasSessoesCliente = async (clienteId) => {
+  try {
+    console.log('Buscando próximas sessões do cliente:', clienteId);
+    
+    // TODO: Substituir pela URL real da API
+    // const response = await api.get(`/agenda/cliente/${clienteId}/proximas`);
+    // return response.data;
+    
+    // Simulação temporária com dados mockados
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const hoje = new Date();
+    const proximasSessoesMock = [
+      {
+        id: "proxima-1",
+        data: new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +7 dias
+        horario: "14:00",
+        numeroSessao: "2",
+        descricao: "Continuação do trabalho no braço",
+        valor: "300"
+      },
+      {
+        id: "proxima-2", 
+        data: new Date(hoje.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 dias
+        horario: "10:00",
+        numeroSessao: "3",
+        descricao: "Finalização e retoques",
+        valor: "250"
+      }
+    ];
+    
+    return proximasSessoesMock;
+  } catch (error) {
+    console.error('Erro ao buscar próximas sessões:', error);
+    throw new Error('Falha ao carregar próximas sessões do cliente');
+  }
+};
