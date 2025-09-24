@@ -1,21 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
+const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
   const [nome, setNome] = useState('');
   const [contato, setContato] = useState('');
   const [endereco, setEndereco] = useState('');
+  const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
+
+  useEffect(() => {
+    if (cliente) {
+      setNome(cliente.nome || '');
+      setContato(cliente.contato || '');
+      setEndereco(cliente.endereco || '');
+      setDescricao(cliente.descricao || '');
+      setObservacoes(cliente.observacoes || '');
+    }
+  }, [cliente, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    const novoCliente = { nome, contato, endereco, observacoes };
-    if (onSave) onSave(novoCliente);
+  const handleUpdate = () => {
+    const clienteAtualizado = { 
+      ...cliente,
+      nome,
+      contato,
+      endereco,
+      descricao,
+      observacoes 
+    };
+    if (onUpdate) onUpdate(clienteAtualizado);
     onClose();
-    setNome('');
-    setContato('');
-    setEndereco('');
-    setObservacoes('');
   };
 
   return (
@@ -24,7 +38,7 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
         
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Cadastrar Novo Cliente</h2>
+          <h2 className="text-2xl font-bold text-white">Atualizar Cliente</h2>
           <button 
             onClick={onClose} 
             className="text-gray-400 hover:text-white transition-colors"
@@ -72,6 +86,17 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
           </div>
 
           <div>
+            <label className="block text-gray-400 mb-1">Descrição</label>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descreva o serviço ou observação principal"
+              rows="3"
+              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+            />
+          </div>
+
+          <div>
             <label className="block text-gray-400 mb-1">Observações</label>
             <textarea
               value={observacoes}
@@ -94,10 +119,10 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
           </button>
           <button 
             type="button" 
-            onClick={handleSave}
+            onClick={handleUpdate}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium"
           >
-            Cadastrar
+            Salvar Alterações
           </button>
         </div>
       </div>
@@ -105,4 +130,4 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   );
 };
 
-export default ModalCadastrarCliente;
+export default ModalAtualizarCliente;

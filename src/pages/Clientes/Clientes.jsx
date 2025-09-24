@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import Layout from '../../baselayout/Layout';
 import { Plus } from "lucide-react";
+import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 
-const ClienteCard = ({ nome, telefone, descricao, valor }) => (
+
+const ClienteCard = ({ id, nome, telefone, descricao, valor, onAtualizar }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
@@ -10,9 +12,13 @@ const ClienteCard = ({ nome, telefone, descricao, valor }) => (
     </div>
     <p className="text-gray-400 text-sm mb-2">{telefone}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
-    <button className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium">
-      Atualizar Cliente
-    </button>
+    <button
+  onClick={() => onAtualizar({ id, nome, telefone, descricao, valor })}
+  className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
+>
+  Atualizar Cliente
+</button>
+
   </div>
 );
 
@@ -27,11 +33,20 @@ export default function Clientes() {
   const [clientes, setClientes] = useState(clientesMock);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
+
 
   // Função para remover acentos
   const removerAcentos = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
+
+  const handleAbrirModal = (cliente) => {
+  setClienteSelecionado(cliente);
+  setModalOpen(true);
+};
+
 
   const handleBuscarClientes = async () => {
     setLoading(true);
@@ -91,14 +106,33 @@ export default function Clientes() {
         {/* Grid de clientes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClientes.map(cliente => (
-            <ClienteCard key={cliente.id} {...cliente} />
+            <ClienteCard 
+              key={cliente.id} 
+              {...cliente} 
+              onAtualizar={handleAbrirModal} 
+            />
           ))}
+
         </div>
 
         {!loading && filteredClientes.length === 0 && (
           <p className="text-gray-400 mt-4">Nenhum cliente encontrado para "{searchTerm}".</p>
         )}
       </div>
+
+      <ModalAtualizarCliente
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        cliente={clienteSelecionado}
+        onUpdate={(clienteAtualizado) => {
+          // Atualiza a lista de clientes no estado
+          setClientes(prev =>
+            prev.map(c => c.id === clienteAtualizado.id ? clienteAtualizado : c)
+          );
+          setModalOpen(false);
+        }}
+      />
+
     </Layout>
   );
 }
