@@ -34,6 +34,13 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSave }) {
     setSessoes([...sessoes, { data: "", numero: `${sessoes.length + 1}ª sessão`, valor: "", descricao: "" }]);
   };
 
+  const removerSessao = (index) => {
+    if (sessoes.length > 1) {
+      const novasSessoes = sessoes.filter((_, i) => i !== index);
+      setSessoes(novasSessoes);
+    }
+  };
+
   const handleSave = () => {
     if (!clienteSelecionado) {
       alert("Selecione um cliente!");
@@ -101,6 +108,20 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSave }) {
     <h3 className="text-lg font-semibold mt-4 mb-2 text-white">Sessões para {clienteSelecionado.nome}</h3>
     {sessoes.map((sessao, index) => (
       <div key={index} className="p-3 mb-3 border rounded bg-neutral-800 space-y-2">
+        {/* Header da Sessão */}
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="text-white font-medium">Sessão {index + 1}</h4>
+          {sessoes.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removerSessao(index)}
+              className="text-red-400 hover:text-red-300 text-sm font-medium"
+            >
+              Remover
+            </button>
+          )}
+        </div>
+        
         {/* Linha 1: Data e Número */}
         <div className="flex gap-2">
           <div className="flex-1">
