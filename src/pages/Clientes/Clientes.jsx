@@ -1,40 +1,50 @@
 import React, { useState } from "react";
 import Layout from '../../baselayout/Layout';
-import { Plus } from "lucide-react";
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
+import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
 
 
-const ClienteCard = ({ id, nome, telefone, descricao, valor, onAtualizar }) => (
+const ClienteCard = ({ id, nome, telefone, descricao, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
-      <span className="text-red-500 font-bold text-lg">{valor}</span>
     </div>
     <p className="text-gray-400 text-sm mb-2">{telefone}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
-    <button
-  onClick={() => onAtualizar({ id, nome, telefone, descricao, valor })}
-  className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
->
-  Atualizar Cliente
-</button>
-
+    <div className="flex justify-between items-center">
+      <button
+        onClick={() => onAtualizar({ id, nome, telefone, descricao })}
+        className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
+      >
+        Atualizar Cliente
+      </button>
+      <button
+        onClick={() => onVerDetalhes({ id, nome, telefone, descricao })}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+      >
+        Detalhes
+      </button>
+    </div>
   </div>
 );
 
 export default function Clientes() {
   const clientesMock = [
-    { id: 1, nome: "Maria Clara Santos", telefone: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito", valor: "R$ 450" },
-    { id: 2, nome: "João Silva", telefone: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas", valor: "R$ 680" },
-    { id: 3, nome: "Ana Santos", telefone: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga", valor: "R$ 280" },
-    { id: 4, nome: "Carlos Mendes", telefone: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço", valor: "R$ 520" },
+    { id: 1, nome: "Maria Clara Santos", telefone: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito" },
+    { id: 2, nome: "João Silva", telefone: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas" },
+    { id: 3, nome: "Ana Santos", telefone: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga" },
+    { id: 4, nome: "Carlos Mendes", telefone: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço" },
   ];
 
   const [clientes, setClientes] = useState(clientesMock);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalCadastrarOpen, setModalCadastrarOpen] = useState(false);
+  const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  const [clienteParaDetalhes, setClienteParaDetalhes] = useState(null);
 
 
   // Função para remover acentos
@@ -43,9 +53,42 @@ export default function Clientes() {
   };
 
   const handleAbrirModal = (cliente) => {
-  setClienteSelecionado(cliente);
-  setModalOpen(true);
-};
+    setClienteSelecionado(cliente);
+    setModalOpen(true);
+  };
+
+  const handleAbrirModalCadastrar = () => {
+    setModalCadastrarOpen(true);
+  };
+
+  const handleClienteCadastrado = (novoCliente) => {
+    // Adiciona o novo cliente à lista
+    const clienteComId = {
+      ...novoCliente,
+      id: Date.now(), // ID temporário
+      telefone: novoCliente.contato,
+      descricao: novoCliente.observacoes || 'Sem descrição'
+    };
+    
+    setClientes(prev => [...prev, clienteComId]);
+    setModalCadastrarOpen(false);
+  };
+
+  const handleVerDetalhes = (cliente) => {
+    // Converter dados do cliente para o formato esperado pelo modal
+    const clienteParaModal = {
+      id: cliente.id,
+      nome: cliente.nome,
+      contato: cliente.telefone,
+      endereco: 'Endereço não informado',
+      observacoes: cliente.descricao,
+      sessoes: [], // Por enquanto vazio, pode ser implementado depois
+      proximasSessoes: [] // Por enquanto vazio, pode ser implementado depois
+    };
+    
+    setClienteParaDetalhes(clienteParaModal);
+    setModalDetalhesOpen(true);
+  };
 
 
   const handleBuscarClientes = async () => {
@@ -97,8 +140,11 @@ export default function Clientes() {
               </button>
             </div>
 
-            <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
-              <Plus className="w-5 h-5" /> Adicionar Cliente
+            <button 
+              onClick={handleAbrirModalCadastrar}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold"
+            >
+              Adicionar Cliente
             </button>
           </div>
         </div>
@@ -110,6 +156,7 @@ export default function Clientes() {
               key={cliente.id} 
               {...cliente} 
               onAtualizar={handleAbrirModal} 
+              onVerDetalhes={handleVerDetalhes}
             />
           ))}
 
@@ -130,6 +177,22 @@ export default function Clientes() {
             prev.map(c => c.id === clienteAtualizado.id ? clienteAtualizado : c)
           );
           setModalOpen(false);
+        }}
+      />
+
+      <ModalCadastrarCliente
+        isOpen={modalCadastrarOpen}
+        onClose={() => setModalCadastrarOpen(false)}
+        onSave={handleClienteCadastrado}
+      />
+
+      <ModalDetalhesCliente
+        isOpen={modalDetalhesOpen}
+        onClose={() => setModalDetalhesOpen(false)}
+        cliente={clienteParaDetalhes}
+        onEditClient={(cliente) => {
+          console.log('Editar cliente:', cliente);
+          // Aqui você pode implementar a lógica para editar o cliente
         }}
       />
 
