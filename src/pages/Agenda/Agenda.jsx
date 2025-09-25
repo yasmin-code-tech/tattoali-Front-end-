@@ -283,7 +283,7 @@ export default function Agenda() {
                     onClick={() => handleVerDetalhesCliente(sessao)}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto transition-colors"
                   >
-                    Ver Detalhes
+                    Detalhes
                   </button>
                   <button
                     onClick={() => handleSessaoRealizadaPorCliente(sessao)}
