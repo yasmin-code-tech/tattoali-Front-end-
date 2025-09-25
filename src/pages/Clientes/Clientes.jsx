@@ -1,33 +1,31 @@
 import React, { useState } from "react";
 import Layout from '../../baselayout/Layout';
-import { Plus } from "lucide-react";
 
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
 
-const ClienteCard = ({ id, nome, telefone, descricao, valor, onAtualizar, onVerDetalhes }) => (
+const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
-      <span className="text-red-500 font-bold text-lg">{valor}</span>
     </div>
-    <p className="text-gray-400 text-sm mb-2">{telefone}</p>
+    <p className="text-gray-400 text-sm mb-2">{contato}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
 
-    <div className="flex gap-2">
+    <div className="flex justify-between items-center">
       <button
-        onClick={() => onAtualizar({ id, nome, telefone, descricao, valor })}
+        onClick={() => onAtualizar({ id, nome, contato, descricao })}
         className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Atualizar Cliente
       </button>
 
       <button
-        onClick={() => onVerDetalhes({ id, nome, telefone, descricao, valor })}
+        onClick={() => onVerDetalhes({ id, nome, contato, descricao })}
         className="bg-red-600 hover:bg-red-700 text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
-        Ver Detalhes
+        Detalhes
       </button>
     </div>
   </div>
@@ -35,10 +33,10 @@ const ClienteCard = ({ id, nome, telefone, descricao, valor, onAtualizar, onVerD
 
 export default function Clientes() {
   const clientesMock = [
-    { id: 1, nome: "Maria Clara Santos", telefone: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito", valor: "R$ 450" },
-    { id: 2, nome: "João Silva", telefone: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas", valor: "R$ 680" },
-    { id: 3, nome: "Ana Santos", telefone: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga", valor: "R$ 280" },
-    { id: 4, nome: "Carlos Mendes", telefone: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço", valor: "R$ 520" },
+    { id: 1, nome: "Maria Clara Santos", contato: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito" },
+    { id: 2, nome: "João Silva", contato: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas" },
+    { id: 3, nome: "Ana Santos", contato: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga" },
+    { id: 4, nome: "Carlos Mendes", contato: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço" },
   ];
 
   const [clientes, setClientes] = useState(clientesMock);
@@ -78,7 +76,16 @@ export default function Clientes() {
   };
 
   const handleAbrirModalDetalhes = (cliente) => {
-    setClienteSelecionado(cliente);
+    // Agora os dados já estão no formato correto!
+    const clienteParaModal = {
+      ...cliente,
+      endereco: 'Endereço não informado',
+      observacoes: cliente.descricao,
+      sessoes: [], // Por enquanto vazio, pode ser implementado depois
+      proximasSessoes: [] // Por enquanto vazio, pode ser implementado depois
+    };
+    
+    setClienteSelecionado(clienteParaModal);
     setModalDetalhesOpen(true);
   };
 
@@ -123,9 +130,9 @@ export default function Clientes() {
 
             <button
               onClick={handleAbrirModalCadastrar}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold"
             >
-              <Plus className="w-5 h-5" /> Adicionar Cliente
+              Adicionar Cliente
             </button>
           </div>
         </div>
@@ -173,8 +180,15 @@ export default function Clientes() {
         isOpen={modalCadastrarOpen}
         onClose={() => setModalCadastrarOpen(false)}
         onSave={(novoCliente) => {
-          // gera id simples — substitua pela lógica da API se houver
-          setClientes(prev => [...prev, { id: prev.length + 1, ...novoCliente }]);
+          // Adiciona o novo cliente à lista com formato padronizado
+          const clienteComId = {
+            ...novoCliente,
+            id: Date.now(), // ID temporário único
+            contato: novoCliente.contato, // Já está correto!
+            descricao: novoCliente.observacoes || 'Sem descrição'
+          };
+          
+          setClientes(prev => [...prev, clienteComId]);
           setModalCadastrarOpen(false);
         }}
       />

@@ -55,7 +55,7 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
               type="text"
               value={contato}
               onChange={(e) => setContato(e.target.value)}
-              placeholder="Digite o telefone ou e-mail do cliente"
+              placeholder="Digite o telefone do cliente"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
             />
           </div>

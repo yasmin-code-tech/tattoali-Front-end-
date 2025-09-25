@@ -68,6 +68,15 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
             </div>
 
             <div className="space-y-6">
+              {cliente.contato && (
+                <div>
+                  <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
+                    Contato
+                  </h3>
+                  <p className="text-white">{cliente.contato}</p>
+                </div>
+              )}
+
               {cliente.endereco && (
                 <div>
                   <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
@@ -82,12 +91,37 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
                   <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
                     Próximas Sessões
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {cliente.proximasSessoes.map((sessao, index) => (
-                      <p key={index} className="text-white">
-                        {formatDate(sessao.data)} - {sessao.horario} - {sessao.numeroSessao}ª sessão
-                      </p>
+                      <div key={index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-white font-medium">
+                            {formatDate(sessao.data)} - {sessao.horario}
+                          </span>
+                          <span className="text-green-400 font-semibold text-sm">
+                            {formatCurrency(sessao.valor)}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm">
+                          {sessao.numeroSessao}ª sessão - {sessao.descricao}
+                        </p>
+                      </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {cliente.proximasSessoes && cliente.proximasSessoes.length === 0 && (
+                <div>
+                  <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
+                    Próximas Sessões
+                  </h3>
+                  <div className="text-center text-gray-400 py-4">
+                    <svg className="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm">Nenhuma sessão agendada</p>
                   </div>
                 </div>
               )}
