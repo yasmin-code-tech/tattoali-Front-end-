@@ -68,6 +68,15 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
             </div>
 
             <div className="space-y-6">
+              {cliente.contato && (
+                <div>
+                  <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
+                    Contato
+                  </h3>
+                  <p className="text-white">{cliente.contato}</p>
+                </div>
+              )}
+
               {cliente.endereco && (
                 <div>
                   <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
