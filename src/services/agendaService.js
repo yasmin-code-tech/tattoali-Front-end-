@@ -21,27 +21,39 @@ export const buscarAgendaDoDia = async (data) => {
       [data]: [
         {
           id: "sessao-1",
+          clienteId: "cliente-1",
           clienteNome: "João Silva",
+          clienteContato: "(11) 99999-1111",
           horario: "10:00",
           descricao: "Fechamento de traço no antebraço",
           duracaoMin: 90,
+          numeroSessao: "2",
+          valor: "300"
         },
         {
           id: "sessao-2",
+          clienteId: "cliente-2",
           clienteNome: "Maria Souza",
+          clienteContato: "(11) 88888-2222",
           horario: "14:30",
           descricao: "Preenchimento de sombreamento na perna",
           duracaoMin: 120,
+          numeroSessao: "1",
+          valor: "450"
         },
       ],
       // Outro exemplo fixo: 2025-12-01
       "2025-12-01": [
         {
           id: "sessao-3",
+          clienteId: "cliente-3",
           clienteNome: "Carlos Pereira",
+          clienteContato: "(11) 77777-3333",
           horario: "09:00",
           descricao: "Primeira sessão da composição nas costas",
           duracaoMin: 180,
+          numeroSessao: "1",
+          valor: "500"
         },
       ],
     };
