@@ -263,7 +263,7 @@ export default function Agenda() {
             <p className="text-gray-400">Gerencie seus agendamentos do dia</p>
           </div>
         </div>
-
+        
         {/* Seletor de Data + Ações (input à esquerda, botões à direita) */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -403,20 +403,20 @@ export default function Agenda() {
             </p>
 
             {filtroVisualizacao === 'pendentes' && (
-              <div className="flex flex-col gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleAdicionarCliente}
-                  className="btn-primary px-6 py-3 rounded-lg font-semibold w-full sm:w-48 lg:w-52"
-                >
-                  Adicionar Cliente
-                </button>
-                <button
+            <div className="flex flex-col gap-3 w-full sm:w-auto">
+              <button
+                onClick={handleAdicionarCliente}
+                className="btn-primary px-6 py-3 rounded-lg font-semibold w-full sm:w-48 lg:w-52"
+              >
+                Adicionar Cliente
+              </button>
+              <button
                   onClick={handleMarcarSessao}
-                  className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium w-full sm:w-48 lg:w-52"
-                >
-                  Marcar Sessão
-                </button>
-              </div>
+                className="border border-gray-600 text-gray-300 hover:text-white px-6 py-3 rounded-lg transition-colors font-medium w-full sm:w-48 lg:w-52"
+              >
+                Marcar Sessão
+              </button>
+            </div>
             )}
           </div>
         ) : !loading && getSessoesAtuais().length === 0 ? (
@@ -468,18 +468,18 @@ export default function Agenda() {
                   </button>
                   {filtroVisualizacao === 'pendentes' && (
                     <>
-                      <button
-                        onClick={() => handleSessaoRealizadaPorCliente(sessao)}
-                        className="btn-primary px-4 py-2 rounded-lg font-semibold w-full sm:w-auto"
-                      >
-                        Sessão Realizada
-                      </button>
-                      <button
-                        onClick={() => handleSessaoCancelada(sessao)}
-                        className="border border-gray-600 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium w-full sm:w-auto"
-                      >
-                        Sessão Cancelada
-                      </button>
+                  <button
+                    onClick={() => handleSessaoRealizadaPorCliente(sessao)}
+                    className="btn-primary px-4 py-2 rounded-lg font-semibold w-full sm:w-auto"
+                  >
+                    Sessão Realizada
+                  </button>
+                  <button
+                    onClick={() => handleSessaoCancelada(sessao)}
+                    className="border border-gray-600 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium w-full sm:w-auto"
+                  >
+                    Sessão Cancelada
+                  </button>
                     </>
                   )}
                 </div>

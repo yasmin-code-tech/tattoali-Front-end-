@@ -9,7 +9,9 @@ import { api } from "../lib/api";
 export const marcarSessaoRealizada = async (sessaoId) => {
   console.log('Marcando sessão como realizada:', sessaoId);
   try {
-    const response = await api.put(`/api/sessions/realizar/${sessaoId}`, { realizado: true });
+    const response = await api.put(`/api/sessions/realizar/${sessaoId}`, { 
+      realizado: true
+    });
     return response;
   } catch (error) {
     console.error('Falha ao marcar sessão como realizada:', error?.message);
@@ -26,7 +28,11 @@ export const marcarSessaoRealizada = async (sessaoId) => {
 export const cancelarSessao = async (sessaoId, motivo = '') => {
   console.log('Cancelando sessão:', sessaoId, 'Motivo:', motivo);
   try {
-    const response = await api.put(`/api/sessions/realizar/${sessaoId}`, { realizado: false });
+    const response = await api.put(`/api/sessions/${sessaoId}`, { 
+      realizado: false,
+      cancelado: true,
+      motivo: motivo 
+    });
     return response;
   } catch (error) {
     console.error('Falha ao cancelar sessão:', error?.message);
@@ -88,12 +94,23 @@ export const buscarSessoesPendentesCliente = async (clienteId) => {
  * @returns {Promise<Array>} Lista de sessões realizadas do cliente
  */
 export const buscarSessoesRealizadasCliente = async (clienteId) => {
-  console.log('Buscando sessões realizadas do cliente:', clienteId);
+  console.log('=== BUSCANDO SESSÕES REALIZADAS DO CLIENTE ===');
+  console.log('Cliente ID:', clienteId);
+  console.log('Tipo:', typeof clienteId);
+  
   try {
-    const response = await api.get(`/api/sessions/cliente/${clienteId}/realizadas`);
+    const url = `/api/sessions/cliente/${clienteId}/realizadas`;
+    console.log('URL chamada:', url);
+    const response = await api.get(url);
+    console.log('Resposta da API:', response);
+    console.log('Quantidade de sessões:', Array.isArray(response) ? response.length : 0);
     return Array.isArray(response) ? response : [];
   } catch (error) {
-    console.error('Falha ao carregar sessões realizadas do cliente:', error?.message);
+    console.error('=== ERRO AO BUSCAR SESSÕES REALIZADAS DO CLIENTE ===');
+    console.error('Erro:', error);
+    console.error('Mensagem:', error?.message);
+    console.error('Status:', error?.status);
+    console.error('Response data:', error?.response?.data);
     return [];
   }
 };
@@ -109,39 +126,42 @@ export const buscarProximasSessoesCliente = async (clienteId) => {
 };
 
 
-// Função para buscar sessões pendentes por data
-export const buscarSessoesPendentesPorData = async (data) => {
-  console.log('=== BUSCANDO SESSÕES PENDENTES ===');
-  console.log('Data recebida:', data);
-  console.log('Tipo da data:', typeof data);
-  console.log('URL que será chamada:', `/api/sessions/pendentes?data=${data}`);
+/**
+ * Busca a agenda do dia (sessões agendadas/pendentes)
+ * @param {string} data - Data no formato YYYY-MM-DD
+ * @returns {Promise<Array>} Lista de sessões agendadas para a data
+ */
+export const buscarAgendaDoDia = async (data) => {
+  console.log('=== BUSCANDO AGENDA DO DIA ===');
+  console.log('Data:', data);
   
-  // Validar se a data é válida antes de fazer a requisição
+  // Validar se a data é válida
   if (!data || data === 'undefined' || data === 'null' || isNaN(Date.parse(data))) {
-    console.log('Data inválida detectada, usando data atual');
+    console.log('Data inválida, usando data atual');
     data = new Date().toISOString().split('T')[0];
-    console.log('Data corrigida:', data);
   }
   
   try {
-    console.log('Fazendo requisição para buscarSessoesPendentesPorData...');
-    // Codificar a URL corretamente
     const url = `/api/sessions/pendentes?data=${encodeURIComponent(data)}`;
-    console.log('URL codificada:', url);
+    console.log('URL:', url);
     const response = await api.get(url);
-    console.log('Resposta da API:', response);
-    console.log('Tipo da resposta:', typeof response);
-    console.log('É array?', Array.isArray(response));
+    console.log('Sessões agendadas encontradas:', response?.length || 0);
     return Array.isArray(response) ? response : [];
   } catch (error) {
-    console.error('=== ERRO AO BUSCAR SESSÕES PENDENTES ===');
-    console.error('Erro:', error);
-    console.error('Mensagem:', error?.message);
-    console.error('Status:', error?.status);
-    console.error('Data:', error?.data);
-    console.error('Stack:', error?.stack);
+    console.error('Erro ao buscar agenda do dia:', error?.message);
     return [];
   }
+};
+
+/**
+ * Busca sessões agendadas (pendentes) de uma data específica
+ * Esta é a função principal para carregar a agenda do dia
+ * @param {string} data - Data no formato YYYY-MM-DD
+ * @returns {Promise<Array>} Lista de sessões agendadas para a data
+ */
+export const buscarSessoesPendentesPorData = async (data) => {
+  // Usar a função clara de agenda do dia
+  return await buscarAgendaDoDia(data);
 };
 
 export const buscarSessoesRealizadasPorData = async (data) => {
@@ -179,9 +199,6 @@ export const buscarSessoesCanceladasPorData = async (data) => {
   console.log('=== BUSCANDO SESSÕES CANCELADAS ===');
   console.log('Data recebida:', data);
   console.log('Tipo da data:', typeof data);
-  console.log('Data parseada:', Date.parse(data));
-  console.log('É válida?', !isNaN(Date.parse(data)));
-  console.log('URL que será chamada:', `/api/sessions/canceladas?data=${data}`);
   
   // Validar se a data é válida antes de fazer a requisição
   if (!data || data === 'undefined' || data === 'null' || isNaN(Date.parse(data))) {
@@ -204,6 +221,39 @@ export const buscarSessoesCanceladasPorData = async (data) => {
     console.error('Mensagem:', error?.message);
     console.error('Status:', error?.status);
     console.error('Data:', error?.data);
+    return [];
+  }
+};
+
+/**
+ * Busca todas as sessões canceladas (sem filtro de data)
+ * @returns {Promise<Array>} Lista de sessões canceladas
+ */
+export const buscarSessoesCanceladas = async () => {
+  console.log('=== BUSCANDO TODAS SESSÕES CANCELADAS ===');
+  try {
+    const response = await api.get('/api/sessions/canceladas');
+    console.log('Resposta da API:', response);
+    return Array.isArray(response) ? response : [];
+  } catch (error) {
+    console.error('=== ERRO AO BUSCAR SESSÕES CANCELADAS ===');
+    console.error('Erro:', error?.message);
+    return [];
+  }
+};
+
+/**
+ * Busca sessões canceladas de um cliente específico
+ * @param {string} clienteId - ID do cliente
+ * @returns {Promise<Array>} Lista de sessões canceladas do cliente
+ */
+export const buscarSessoesCanceladasCliente = async (clienteId) => {
+  console.log('Buscando sessões canceladas do cliente:', clienteId);
+  try {
+    const response = await api.get(`/api/sessions/cliente/${clienteId}/canceladas`);
+    return Array.isArray(response) ? response : [];
+  } catch (error) {
+    console.error('Falha ao carregar sessões canceladas do cliente:', error?.message);
     return [];
   }
 };

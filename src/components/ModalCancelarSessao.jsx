@@ -9,7 +9,7 @@ export default function ModalCancelarSessao({ isOpen, onClose, onConfirm, sessao
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-45">
       <div className="bg-black border border-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white">Cancelar sessão</h2>
