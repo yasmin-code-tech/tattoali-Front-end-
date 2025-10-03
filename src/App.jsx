@@ -7,7 +7,7 @@ import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
 import Agenda from "./pages/Agenda/Agenda";
 import Perfil from "./pages/Perfil/Perfil";
-import Clientes from "./pages/Clientes/Clientes"
+import Clientes from "./pages/Clientes/Clientes";
 
 export default function App() {
   return (
@@ -39,9 +39,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/perfil" element={<Perfil />} />
-            
-            {/* adicione outras privadas aqui no futuro */}
-            { <Route path="/clientes" element={<Clientes />} /> }
+            <Route path="/clientes" element={<Clientes />} />
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           </Route>
 

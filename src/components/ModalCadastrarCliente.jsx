@@ -19,7 +19,7 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-40">
       <div className="bg-black border border-gray-800 rounded-2xl p-8 w-full max-w-lg mx-4">
         
         {/* Header */}
