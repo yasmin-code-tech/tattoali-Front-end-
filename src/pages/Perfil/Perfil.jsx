@@ -5,7 +5,6 @@ import { buscarPerfilTatuador } from '../../services/perfilService';
 import ModalEditarPerfil from "../../components/ModalEditarPerfil";
 import ModalAlterarSenha from "../../components/ModalAlterarSenha";
 
-// Ícones
 const UserIcon = () => (
   <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -93,8 +92,12 @@ export default function Perfil() {
         <div className="max-w-4xl mx-auto">
           <div className="card p-8 rounded-2xl max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <div className="w-32 h-32 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserIcon />
+              <div className="w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                {perfil.foto ? (
+                  <img src={perfil.foto} alt="Foto de Perfil" className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon />
+                )}
               </div>
               <div className="text-center mb-2">
                 <h2 className="text-2xl font-bold text-white">{perfil.nome}</h2>
@@ -129,9 +132,9 @@ export default function Perfil() {
             <div className="mb-8">
               <h3 className="red-title text-lg font-semibold mb-4">Estilos de Tatuagem</h3>
               <div className="flex flex-wrap">
-                {perfil.especialidades?.map((estilo) => ( // ✅ CORREÇÃO AQUI
-                  <span key={estilo} className="specialty-tag">
-                    {estilo}
+                {perfil.Styles?.map((estilo) => (
+                  <span key={estilo.id} className="specialty-tag">
+                    {estilo.nome}
                   </span>
                 ))}
               </div>
@@ -140,27 +143,28 @@ export default function Perfil() {
             <div>
               <h3 className="red-title text-lg font-semibold mb-4">Contato</h3>
               <div className="space-y-2">
-                <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <WhatsAppIcon />
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">WhatsApp</p>
-                    {/* ✅ CORREÇÃO AQUI */}
-                    <p className="text-gray-400">{perfil.contatos?.whatsapp}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
-                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <EmailIcon />
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">E-mail</p>
-                    {/* ✅ CORREÇÃO AQUI */}
-                    <p className="text-gray-400">{perfil.contatos?.email}</p>
-                  </div>
-                </div>
+                {perfil.whatsapp && (
+                    <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
+                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                            <WhatsAppIcon />
+                        </div>
+                        <div>
+                            <p className="text-white font-medium">WhatsApp</p>
+                            <p className="text-gray-400">{perfil.whatsapp}</p>
+                        </div>
+                    </div>
+                )}
+                {perfil.email && (
+                    <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
+                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <EmailIcon />
+                        </div>
+                        <div>
+                            <p className="text-white font-medium">E-mail</p>
+                            <p className="text-gray-400">{perfil.email}</p>
+                        </div>
+                    </div>
+                )}
               </div>
             </div>
           </div>
