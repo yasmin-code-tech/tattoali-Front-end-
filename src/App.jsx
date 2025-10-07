@@ -8,6 +8,7 @@ import Cadastro from "./pages/Cadastro/Cadastro";
 import Agenda from "./pages/Agenda/Agenda";
 import Perfil from "./pages/Perfil/Perfil";
 import Clientes from "./pages/Clientes/Clientes";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 export default function App() {
   return (
@@ -40,7 +41,7 @@ export default function App() {
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/clientes" element={<Clientes />} />
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            {<Route path="/dashboard" element={<Dashboard />} /> }
           </Route>
 
           {/* fallback */}
