@@ -29,7 +29,11 @@ export async function apiFetch(path, options = {}) {
 
   
   const auth = loadAuth(); // { token, refreshToken, user? }
-  if (auth?.token) headers.set("Authorization", `Bearer ${auth.token}`);
+  console.log('Auth carregado:', auth);
+  if (auth?.token) {
+    headers.set("Authorization", `Bearer ${auth.token}`);
+    console.log('Token adicionado ao header:', auth.token);
+  }
 
 
   const init = {
@@ -44,7 +48,13 @@ export async function apiFetch(path, options = {}) {
     signal: options.signal,
   };
 
+  console.log('Fazendo requisição para:', url);
+  console.log('Headers:', Object.fromEntries(headers.entries()));
+  console.log('Body:', options.body);
+  
   let res = await fetch(url, init);
+  console.log('Resposta recebida:', res.status, res.statusText);
+  
   if (res.status === 401 && auth?.refreshToken) {
     try {
       await ensureRefreshToken(auth.refreshToken);
@@ -63,9 +73,13 @@ export async function apiFetch(path, options = {}) {
 
 
   if (!res.ok) {
+    console.log('Erro na resposta:', res.status, res.statusText);
     throw await toApiError(res);
   }
-  return await parseBody(res);
+  
+  const body = await parseBody(res);
+  console.log('Corpo da resposta:', body);
+  return body;
 }
 
 export const api = {
@@ -175,6 +189,32 @@ async function mockApiFetch(path, options = {}) {
 
   if ((path === "/auth/refresh" || path === "/api/user/refresh") && method === "POST") {
     return { token: "mock-token-123-refreshed", refreshToken: "mock-refresh-456" };
+  }
+
+  // Mock para clientes
+  if (path === "/api/client" && method === "GET") {
+    if (!auth?.token) {
+      const err = new Error("Não autenticado (mock)");
+      err.status = 401;
+      err.data = { message: "Não autenticado (mock)" };
+      throw err;
+    }
+    return [
+      { client_id: 1, nome: "João Silva", telefone: "(11) 99999-1111", descricao: "Cliente VIP" },
+      { client_id: 2, nome: "Maria Souza", telefone: "(11) 88888-2222", descricao: "Prefere manhã" },
+      { client_id: 3, nome: "Carlos Oliveira", telefone: "(11) 77777-3333", descricao: "Primeira tatuagem" }
+    ];
+  }
+
+  // Mock para sessões
+  if (path.startsWith("/api/sessions") && method === "GET") {
+    if (!auth?.token) {
+      const err = new Error("Não autenticado (mock)");
+      err.status = 401;
+      err.data = { message: "Não autenticado (mock)" };
+      throw err;
+    }
+    return [];
   }
 
   return null;

@@ -37,7 +37,7 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
   }, 0) || 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]">
       <div className="bg-black border border-gray-800 rounded-2xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Detalhes do Cliente</h2>

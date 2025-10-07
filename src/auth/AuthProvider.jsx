@@ -44,7 +44,7 @@ export default function AuthProvider({ children }) {
       const authToSave = {
         token: jwt,
         refreshToken: data?.refreshToken,
-        user: data?.user || null,
+        user: data?.user || null, // Removido fallback hardcoded - se não tem user, é null
       };
       saveAuth(authToSave);
 
