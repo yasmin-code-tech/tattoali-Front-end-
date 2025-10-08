@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   const [nome, setNome] = useState('');
@@ -6,16 +6,28 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   const [endereco, setEndereco] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
+  // Função para limpar o estado do modal
+  const limparEstado = () => {
+    setNome('');
+    setContato('');
+    setEndereco('');
+    setObservacoes('');
+  };
+
+  // Limpar campos quando o modal abrir
+  useEffect(() => {
+    if (isOpen) {
+      limparEstado();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSave = () => {
     const novoCliente = { nome, contato, endereco, observacoes };
     if (onSave) onSave(novoCliente);
+    limparEstado(); // Limpar campos após salvar
     onClose();
-    setNome('');
-    setContato('');
-    setEndereco('');
-    setObservacoes('');
   };
 
   return (
@@ -26,7 +38,10 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Cadastrar Novo Cliente</h2>
           <button 
-            onClick={onClose} 
+            onClick={() => {
+              limparEstado(); // Limpar campos antes de fechar
+              onClose();
+            }} 
             className="text-gray-400 hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +102,10 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-8">
           <button 
             type="button" 
-            onClick={onClose}
+            onClick={() => {
+              limparEstado(); // Limpar campos antes de fechar
+              onClose();
+            }}
             className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium"
           >
             Cancelar
