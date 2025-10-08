@@ -11,19 +11,25 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   ]);
   const [modalKey, setModalKey] = useState(0); // Key para forçar re-render
 
+  // Função para limpar o estado do modal
+  const limparEstado = () => {
+    setClienteSelecionado(null);
+    setSearch("");
+    setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "" }]);
+  };
+
   // Carregar clientes e resetar seleção quando o modal abrir
   useEffect(() => {
     console.log('ModalMarcarSessao useEffect executado, isOpen:', isOpen);
     if (isOpen) {
       console.log('Modal aberto, resetando seleção e carregando clientes...');
-      setClienteSelecionado(null); // Resetar seleção
-      setSearch(""); // Limpar busca
+      limparEstado(); // Resetar estado
       setModalKey(prev => prev + 1); // Forçar re-render com nova key
       carregarClientes();
     } else {
       console.log('Modal fechado');
     }
-  }, [isOpen]);
+  }, [isOpen, dataSelecionada]);
 
   // Garantir que após carregar clientes, nenhum esteja selecionado
   useEffect(() => {
@@ -74,7 +80,11 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   console.log('Cliente selecionado:', clienteSelecionado);
 
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
+    if (e.target === e.currentTarget) {
+      // Limpar estado antes de fechar
+      limparEstado();
+      onClose();
+    }
   };
 
   const handleChangeSessao = (index, field, value) => {
@@ -119,6 +129,9 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
         descricao: s.descricao
       }))
     });
+    
+    // Limpar estado antes de fechar
+    limparEstado();
     onClose();
   };
 
@@ -131,7 +144,11 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       <div className="card p-8 rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Marcar Sessão</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer">
+          <button onClick={() => {
+            // Limpar estado antes de fechar
+            limparEstado();
+            onClose();
+          }} className="text-gray-400 hover:text-white cursor-pointer">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -300,7 +317,11 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
           <div className="flex space-x-4 pt-4">
             <button 
               type="button" 
-              onClick={onClose}
+              onClick={() => {
+                // Limpar estado antes de fechar
+                limparEstado();
+                onClose();
+              }}
               className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium cursor-pointer"
             >
               Cancelar

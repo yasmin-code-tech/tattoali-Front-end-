@@ -16,7 +16,8 @@ export const criarCliente = async (dadosCliente) => {
     const dadosBackend = {
       nome: dadosCliente.nome,
       telefone: dadosCliente.telefone || dadosCliente.contato,
-      descricao: dadosCliente.descricao || dadosCliente.observacoes
+      descricao: dadosCliente.descricao || dadosCliente.observacoes,
+      endereco: dadosCliente.endereco || ''
     };
     
     console.log('Dados do frontend:', dadosCliente);
