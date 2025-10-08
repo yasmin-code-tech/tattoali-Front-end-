@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import Layout from '../../baselayout/Layout'
-import { marcarSessaoRealizada, cancelarSessao, buscarSessoesPendentesCliente, buscarSessoesRealizadasCliente, adicionarSessao, buscarSessoesPendentesPorData, buscarSessoesRealizadasPorData, buscarSessoesCanceladasPorData } from '../../services/agendaService'
+import { marcarSessaoRealizada, cancelarSessao, buscarSessoesPendentesCliente, buscarSessoesRealizadasCliente, buscarSessoesCanceladasCliente, adicionarSessao, buscarSessoesPendentesPorData, buscarSessoesRealizadasPorData, buscarSessoesCanceladasPorData } from '../../services/agendaService'
 import { criarCliente } from '../../services/clienteService'
 import ModalMarcarSessao from "../../components/ModalMarcarSessao";
 import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
@@ -122,10 +122,11 @@ export default function Agenda() {
 
   const handleVerDetalhesCliente = async (sessao) => {
     try {
-      // Buscar sessões pendentes e realizadas do cliente separadamente
-      const [sessoesPendentes, sessoesRealizadas] = await Promise.all([
+      // Buscar sessões pendentes, realizadas e canceladas do cliente separadamente
+      const [sessoesPendentes, sessoesRealizadas, sessoesCanceladas] = await Promise.all([
         buscarSessoesPendentesCliente(sessao.cliente_id),
-        buscarSessoesRealizadasCliente(sessao.cliente_id)
+        buscarSessoesRealizadasCliente(sessao.cliente_id),
+        buscarSessoesCanceladasCliente(sessao.cliente_id)
       ]);
       
       // Criar objeto cliente com dados da sessão e sessões separadas
@@ -133,8 +134,8 @@ export default function Agenda() {
         id: sessao.cliente_id,
         nome: sessao.cliente?.nome || 'Cliente não encontrado',
         contato: sessao.cliente?.telefone || 'Contato não informado',
-        endereco: 'Endereço não informado',
-        observacoes: 'Observações não informadas',
+        endereco: sessao.cliente?.endereco || 'Endereço não informado',
+        observacoes: sessao.cliente?.descricao || 'Observações não informadas',
         sessoes: sessoesRealizadas.map(sessao => ({
           data: sessao.data_atendimento,
           numeroSessao: sessao.numero_sessao,
@@ -150,6 +151,13 @@ export default function Agenda() {
           numeroSessao: sessao.numero_sessao,
           descricao: sessao.descricao,
           valor: sessao.valor_sessao || '0'
+        })),
+        sessoesCanceladas: sessoesCanceladas.map(sessao => ({
+          data: sessao.data_atendimento,
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0',
+          motivo: sessao.motivo || ''
         }))
       };
       
