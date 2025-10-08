@@ -4,6 +4,7 @@ import Layout from '../../baselayout/Layout';
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
+import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
 
 const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
@@ -33,10 +34,10 @@ const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes 
 
 export default function Clientes() {
   const clientesMock = [
-    { id: 1, nome: "Maria Clara Santos", contato: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito" },
-    { id: 2, nome: "João Silva", contato: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas" },
-    { id: 3, nome: "Ana Santos", contato: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga" },
-    { id: 4, nome: "Carlos Mendes", contato: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço" },
+    { id: 1, nome: "Maria Clara Santos", contato: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito", endereco: "Rua das Flores, 123 - São Paulo/SP" },
+    { id: 2, nome: "João Silva", contato: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas", endereco: "Av. Paulista, 456 - São Paulo/SP" },
+    { id: 3, nome: "Ana Santos", contato: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga", endereco: "Rua Augusta, 789 - São Paulo/SP" },
+    { id: 4, nome: "Carlos Mendes", contato: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço", endereco: "Rua Oscar Freire, 321 - São Paulo/SP" },
   ];
 
   const [clientes, setClientes] = useState(clientesMock);
@@ -75,18 +76,62 @@ export default function Clientes() {
     setModalAtualizarOpen(true);
   };
 
-  const handleAbrirModalDetalhes = (cliente) => {
-    // Agora os dados já estão no formato correto!
-    const clienteParaModal = {
-      ...cliente,
-      endereco: 'Endereço não informado',
-      observacoes: cliente.descricao,
-      sessoes: [], // Por enquanto vazio, pode ser implementado depois
-      proximasSessoes: [] // Por enquanto vazio, pode ser implementado depois
-    };
-    
-    setClienteSelecionado(clienteParaModal);
-    setModalDetalhesOpen(true);
+  const handleAbrirModalDetalhes = async (cliente) => {
+    try {
+      // Buscar sessões do cliente
+      const [sessoesRealizadas, sessoesPendentes, sessoesCanceladas] = await Promise.all([
+        buscarSessoesRealizadasCliente(cliente.id),
+        buscarSessoesPendentesCliente(cliente.id),
+        buscarSessoesCanceladasCliente(cliente.id)
+      ]);
+
+      // Criar objeto cliente com dados completos
+      const clienteParaModal = {
+        ...cliente,
+        endereco: cliente.endereco || 'Endereço não informado',
+        observacoes: cliente.descricao,
+        sessoes: sessoesRealizadas.map(sessao => ({
+          data: sessao.data_atendimento,
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0'
+        })),
+        proximasSessoes: sessoesPendentes.map(sessao => ({
+          data: sessao.data_atendimento,
+          horario: new Date(sessao.data_atendimento).toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0'
+        })),
+        sessoesCanceladas: sessoesCanceladas.map(sessao => ({
+          data: sessao.data_atendimento,
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0',
+          motivo: sessao.motivo || ''
+        }))
+      };
+      
+      setClienteSelecionado(clienteParaModal);
+      setModalDetalhesOpen(true);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do cliente:', error);
+      // Em caso de erro, ainda abre o modal com dados básicos
+      const clienteParaModal = {
+        ...cliente,
+        endereco: cliente.endereco || 'Endereço não informado',
+        observacoes: cliente.descricao,
+        sessoes: [],
+        proximasSessoes: [],
+        sessoesCanceladas: []
+      };
+      
+      setClienteSelecionado(clienteParaModal);
+      setModalDetalhesOpen(true);
+    }
   };
 
   const handleAbrirModalCadastrar = () => {
