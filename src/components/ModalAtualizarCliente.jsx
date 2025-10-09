@@ -2,151 +2,152 @@ import React, { useState, useEffect } from 'react';
 import { atualizarCliente } from '../services/clienteService';
 
 const ModalAtualizarCliente = ({ isOpen, onClose, cliente, onSuccess }) => {
-  const [nome, setNome] = useState('');
-  const [contato, setContato] = useState('');
-  const [endereco, setEndereco] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [observacoes, setObservacoes] = useState('');
-  const [loading, setLoading] = useState(false);
+const [nome, setNome] = useState('');
+const [contato, setContato] = useState('');
+const [endereco, setEndereco] = useState('');
+const [descricao, setDescricao] = useState('');
+const [observacoes, setObservacoes] = useState('');
+const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (cliente && isOpen) {
-      setNome(cliente.nome || '');
-      setContato(cliente.contato || '');
-      setEndereco(cliente.endereco || '');
-      setDescricao(cliente.descricao || '');
-      setObservacoes(cliente.observacoes || '');
-    }
-  }, [cliente, isOpen]);
+useEffect(() => {
+if (cliente && isOpen) {
+      console.log('Dados do cliente recebidos no modal:', cliente);
+setNome(cliente.nome || '');
+setContato(cliente.contato || '');
+setEndereco(cliente.endereco || '');
+setDescricao(cliente.descricao || '');
+setObservacoes(cliente.observacoes || '');
+}
+}, [cliente, isOpen]);
 
-  if (!isOpen) return null;
+if (!isOpen) return null;
 
-  const handleUpdate = async () => {
-    setLoading(true);
+const handleUpdate = async () => {
+setLoading(true);
 
-    const clienteAtualizado = {
-      id: cliente.id,
-      nome,
-      contato,
-      endereco,
-      descricao,
-      observacoes
-    };
+const clienteAtualizado = {
+id: cliente.id,
+nome,
+contato,
+endereco,
+descricao,
+observacoes
+};
 
-    try {
-      const response = await atualizarCliente(clienteAtualizado);
-      console.log('Resposta do backend:', response);
+try {
+const response = await atualizarCliente(clienteAtualizado);
+console.log('Resposta do backend:', response);
 
-      if (onSuccess) {
-        onSuccess(response); // Atualiza lista de clientes no frontend
-      }
-      onClose();
-    } catch (error) {
-      console.error('Erro ao atualizar cliente:', error);
-      alert('Falha ao atualizar cliente. Verifique os dados e tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
+if (onSuccess) {
+onSuccess(response); // Atualiza lista de clientes no frontend
+}
+onClose();
+} catch (error) {
+console.error('Erro ao atualizar cliente:', error);
+alert('Falha ao atualizar cliente. Verifique os dados e tente novamente.');
+} finally {
+setLoading(false);
+}
+};
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-black border border-gray-800 rounded-2xl p-8 w-full max-w-lg mx-4">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Atualizar Cliente</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+return (
+<div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+<div className="bg-black border border-gray-800 rounded-2xl p-8 w-full max-w-lg mx-4">
 
-        {/* Form */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-gray-400 mb-1">Nome do Cliente</label>
-            <input 
-              type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Digite o nome do cliente"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-            />
-          </div>
+{/* Header */}
+<div className="flex items-center justify-between mb-6">
+<h2 className="text-2xl font-bold text-white">Atualizar Cliente</h2>
+<button 
+onClick={onClose} 
+className="text-gray-400 hover:text-white transition-colors"
+>
+<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+d="M6 18L18 6M6 6l12 12" />
+</svg>
+</button>
+</div>
 
-          <div>
-            <label className="block text-gray-400 mb-1">Contato</label>
-            <input 
-              type="text"
-              value={contato}
-              onChange={(e) => setContato(e.target.value)}
-              placeholder="Digite o telefone do cliente"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-            />
-          </div>
+{/* Form */}
+<div className="space-y-4">
+<div>
+<label className="block text-gray-400 mb-1">Nome do Cliente</label>
+<input 
+type="text"
+value={nome}
+onChange={(e) => setNome(e.target.value)}
+placeholder="Digite o nome do cliente"
+className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+/>
+</div>
 
-          <div>
-            <label className="block text-gray-400 mb-1">Endereço</label>
-            <input 
-              type="text"
-              value={endereco}
-              onChange={(e) => setEndereco(e.target.value)}
-              placeholder="Digite o endereço completo"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-            />
-          </div>
+<div>
+<label className="block text-gray-400 mb-1">Contato</label>
+<input 
+type="text"
+value={contato}
+onChange={(e) => setContato(e.target.value)}
+placeholder="Digite o telefone do cliente"
+className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+/>
+</div>
 
-          <div>
-            <label className="block text-gray-400 mb-1">Descrição</label>
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva o serviço ou observação principal"
-              rows="3"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
-            />
-          </div>
+<div>
+<label className="block text-gray-400 mb-1">Endereço</label>
+<input 
+type="text"
+value={endereco}
+onChange={(e) => setEndereco(e.target.value)}
+placeholder="Digite o endereço completo"
+className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+/>
+</div>
 
-          <div>
-            <label className="block text-gray-400 mb-1">Observações</label>
-            <textarea
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              placeholder="Adicione observações adicionais"
-              rows="3"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
-            />
-          </div>
-        </div>
+<div>
+<label className="block text-gray-400 mb-1">Descrição</label>
+<textarea
+value={descricao}
+onChange={(e) => setDescricao(e.target.value)}
+placeholder="Descreva o serviço ou observação principal"
+rows="3"
+className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+/>
+</div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-8">
-          <button 
-            type="button" 
-            onClick={onClose}
-            className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
-          <button 
-            type="button" 
-            onClick={handleUpdate}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium"
-            disabled={loading}
-          >
-            {loading ? 'Atualizando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+<div>
+<label className="block text-gray-400 mb-1">Observações</label>
+<textarea
+value={observacoes}
+onChange={(e) => setObservacoes(e.target.value)}
+placeholder="Adicione observações adicionais"
+rows="3"
+className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+/>
+</div>
+</div>
+
+{/* Buttons */}
+<div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-8">
+<button 
+type="button" 
+onClick={onClose}
+className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium"
+disabled={loading}
+>
+Cancelar
+</button>
+<button 
+type="button" 
+onClick={handleUpdate}
+className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium"
+disabled={loading}
+>
+{loading ? 'Atualizando...' : 'Salvar Alterações'}
+</button>
+</div>
+</div>
+</div>
+);
 };
 
 export default ModalAtualizarCliente;
