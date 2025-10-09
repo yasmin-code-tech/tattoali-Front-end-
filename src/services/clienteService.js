@@ -70,7 +70,18 @@ export const buscarClientes = async () => {
     const response = await api.get('/api/client');
     console.log('Clientes retornados:', response);
 
-    return Array.isArray(response) ? response : [];
+    // Mapear client_id para id e campos para compatibilidade com o frontend
+    const clientesMapeados = Array.isArray(response) 
+      ? response.map(cliente => ({
+          ...cliente,
+          id: cliente.client_id, // Mapear client_id para id
+          contato: cliente.telefone, // Mapear telefone para contato
+          observacoes: cliente.descricao // Mapear descricao para observacoes
+        }))
+      : [];
+
+    console.log('Clientes mapeados:', clientesMapeados);
+    return clientesMapeados;
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     throw new Error('Falha ao carregar clientes');
@@ -89,7 +100,15 @@ export const buscarClientePorId = async (clienteId) => {
     const response = await api.get(`/api/client/${clienteId}`);
     console.log('Cliente encontrado:', response);
 
-    return response;
+    // Mapear client_id para id e campos para compatibilidade com o frontend
+    const clienteMapeado = {
+      ...response,
+      id: response.client_id, // Mapear client_id para id
+      contato: response.telefone, // Mapear telefone para contato
+      observacoes: response.descricao // Mapear descricao para observacoes
+    };
+
+    return clienteMapeado;
   } catch (error) {
     console.error('Erro ao buscar cliente:', error);
     throw new Error('Falha ao carregar dados do cliente');

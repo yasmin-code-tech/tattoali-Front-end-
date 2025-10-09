@@ -11,6 +11,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, cliente, onSuccess }) => {
 
   useEffect(() => {
     if (cliente && isOpen) {
+      console.log('Dados do cliente recebidos no modal:', cliente);
       setNome(cliente.nome || '');
       setContato(cliente.contato || '');
       setEndereco(cliente.endereco || '');

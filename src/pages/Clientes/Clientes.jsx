@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from '../../baselayout/Layout';
 import { FiUser, FiPlus } from "react-icons/fi";
 
@@ -6,8 +6,9 @@ import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
 import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
+import { buscarClientes } from '../../services/clienteService';
 
-const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes }) => (
+const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
@@ -17,14 +18,14 @@ const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes 
 
     <div className="flex justify-between items-center">
       <button
-        onClick={() => onAtualizar({ id, nome, contato, descricao })}
+        onClick={() => onAtualizar({ id, nome, contato, descricao, endereco, observacoes })}
         className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Atualizar Cliente
       </button>
 
       <button
-        onClick={() => onVerDetalhes({ id, nome, contato, descricao })}
+        onClick={() => onVerDetalhes({ id, nome, contato, descricao, endereco, observacoes })}
         className="bg-red-600 hover:bg-red-700 text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Detalhes
@@ -34,14 +35,7 @@ const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes 
 );
 
 export default function Clientes() {
-  const clientesMock = [
-    { id: 1, nome: "Maria Clara Santos", contato: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito", endereco: "Rua das Flores, 123 - São Paulo/SP" },
-    { id: 2, nome: "João Silva", contato: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas", endereco: "Av. Paulista, 456 - São Paulo/SP" },
-    { id: 3, nome: "Ana Santos", contato: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga", endereco: "Rua Augusta, 789 - São Paulo/SP" },
-    { id: 4, nome: "Carlos Mendes", contato: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço", endereco: "Rua Oscar Freire, 321 - São Paulo/SP" },
-  ];
-
-  const [clientes, setClientes] = useState(clientesMock);
+  const [clientes, setClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,11 +47,27 @@ export default function Clientes() {
 
   const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+  // Função para carregar clientes da API
+  const carregarClientes = async () => {
+    try {
+      setLoading(true);
+      const clientesDaAPI = await buscarClientes();
+      setClientes(clientesDaAPI);
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+      alert('Erro ao carregar clientes. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar clientes quando o componente monta
+  useEffect(() => {
+    carregarClientes();
+  }, []);
+
   const handleBuscarClientes = async () => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setClientes(clientesMock);
-    setLoading(false);
+    await carregarClientes();
   };
 
   const filteredClientes = clientes.filter(cliente =>
@@ -189,7 +199,7 @@ export default function Clientes() {
         isOpen={modalAtualizarOpen}
         onClose={() => setModalAtualizarOpen(false)}
         cliente={clienteSelecionado}
-        onUpdate={(clienteAtualizado) => {
+        onSuccess={(clienteAtualizado) => {
           setClientes(prev =>
             prev.map(c => c.id === clienteAtualizado.id ? clienteAtualizado : c)
           );
