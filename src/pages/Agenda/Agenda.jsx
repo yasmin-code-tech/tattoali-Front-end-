@@ -543,9 +543,22 @@ export default function Agenda() {
           isOpen={modalAtualizarCliente}
           onClose={() => setModalAtualizarCliente(false)}
           cliente={clienteSelecionado}
-          onSuccess={(clienteAtualizado) => {
+          onSuccess={async (clienteAtualizado) => {
             console.log('Cliente atualizado:', clienteAtualizado);
             setModalAtualizarCliente(false);
+            
+            // Atualizar o clienteSelecionado com os dados atualizados
+            if (clienteSelecionado) {
+              const clienteAtualizadoCompleto = {
+                ...clienteSelecionado,
+                nome: clienteAtualizado.nome || clienteSelecionado.nome,
+                contato: clienteAtualizado.contato || clienteSelecionado.contato,
+                endereco: clienteAtualizado.endereco || clienteSelecionado.endereco,
+                observacoes: clienteAtualizado.observacoes || clienteSelecionado.observacoes
+              };
+              setClienteSelecionado(clienteAtualizadoCompleto);
+            }
+            
             // Recarregar agenda para refletir mudanças
             carregarAgendaDoDia(chaveData);
           }}
