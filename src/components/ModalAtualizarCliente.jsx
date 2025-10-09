@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { atualizarCliente } from '../services/clienteService';
 
-const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
+const ModalAtualizarCliente = ({ isOpen, onClose, cliente, onSuccess }) => {
   const [nome, setNome] = useState('');
   const [contato, setContato] = useState('');
   const [endereco, setEndereco] = useState('');
   const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (cliente) {
+    if (cliente && isOpen) {
       setNome(cliente.nome || '');
       setContato(cliente.contato || '');
       setEndereco(cliente.endereco || '');
@@ -19,17 +21,32 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
 
   if (!isOpen) return null;
 
-  const handleUpdate = () => {
-    const clienteAtualizado = { 
-      ...cliente,
+  const handleUpdate = async () => {
+    setLoading(true);
+
+    const clienteAtualizado = {
+      id: cliente.id,
       nome,
       contato,
       endereco,
       descricao,
-      observacoes 
+      observacoes
     };
-    if (onUpdate) onUpdate(clienteAtualizado);
-    onClose();
+
+    try {
+      const response = await atualizarCliente(clienteAtualizado);
+      console.log('Resposta do backend:', response);
+
+      if (onSuccess) {
+        onSuccess(response); // Atualiza lista de clientes no frontend
+      }
+      onClose();
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      alert('Falha ao atualizar cliente. Verifique os dados e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,6 +131,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
             type="button" 
             onClick={onClose}
             className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium"
+            disabled={loading}
           >
             Cancelar
           </button>
@@ -121,8 +139,9 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
             type="button" 
             onClick={handleUpdate}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium"
+            disabled={loading}
           >
-            Salvar Alterações
+            {loading ? 'Atualizando...' : 'Salvar Alterações'}
           </button>
         </div>
       </div>

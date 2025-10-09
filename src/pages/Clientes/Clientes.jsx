@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Layout from '../../baselayout/Layout';
+import { FiUser, FiPlus } from "react-icons/fi";
 
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
@@ -44,23 +45,17 @@ export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // estados dos modais
   const [modalAtualizarOpen, setModalAtualizarOpen] = useState(false);
   const [modalCadastrarOpen, setModalCadastrarOpen] = useState(false);
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
 
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
 
-  // Função para remover acentos
-  const removerAcentos = (str) => {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  };
+  const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   const handleBuscarClientes = async () => {
     setLoading(true);
-    // Simula delay de API
     await new Promise(resolve => setTimeout(resolve, 500));
-    // aqui você pode chamar a API real. Por enquanto re-carrego o mock
     setClientes(clientesMock);
     setLoading(false);
   };
@@ -78,14 +73,12 @@ export default function Clientes() {
 
   const handleAbrirModalDetalhes = async (cliente) => {
     try {
-      // Buscar sessões do cliente
       const [sessoesRealizadas, sessoesPendentes, sessoesCanceladas] = await Promise.all([
         buscarSessoesRealizadasCliente(cliente.id),
         buscarSessoesPendentesCliente(cliente.id),
         buscarSessoesCanceladasCliente(cliente.id)
       ]);
 
-      // Criar objeto cliente com dados completos
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
@@ -98,10 +91,7 @@ export default function Clientes() {
         })),
         proximasSessoes: sessoesPendentes.map(sessao => ({
           data: sessao.data_atendimento,
-          horario: new Date(sessao.data_atendimento).toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }),
+          horario: new Date(sessao.data_atendimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           numeroSessao: sessao.numero_sessao,
           descricao: sessao.descricao,
           valor: sessao.valor_sessao || '0'
@@ -119,7 +109,6 @@ export default function Clientes() {
       setModalDetalhesOpen(true);
     } catch (error) {
       console.error('Erro ao buscar detalhes do cliente:', error);
-      // Em caso de erro, ainda abre o modal com dados básicos
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
@@ -128,7 +117,6 @@ export default function Clientes() {
         proximasSessoes: [],
         sessoesCanceladas: []
       };
-      
       setClienteSelecionado(clienteParaModal);
       setModalDetalhesOpen(true);
     }
@@ -141,14 +129,12 @@ export default function Clientes() {
   return (
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Clientes</h1>
             <p className="text-gray-400">Gerencie informações dos seus clientes</p>
           </div>
 
-          {/* Área de busca + botões */}
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-2 border border-gray-700">
               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,24 +151,24 @@ export default function Clientes() {
               <button
                 onClick={handleBuscarClientes}
                 disabled={loading}
-                className={`ml-2 px-4 py-2 rounded-lg font-medium text-white transition ${
-                  loading ? "bg-gray-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-                }`}
+                className={`ml-2 px-4 py-2 rounded-lg font-medium text-white transition ${loading ? "bg-gray-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {loading ? "Buscando..." : "Buscar"}
               </button>
             </div>
 
+            {/* Botão minimalista adicionar cliente com react-icons */}
             <button
               onClick={handleAbrirModalCadastrar}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              title="Adicionar Cliente"
             >
-              Adicionar Cliente
+              <FiUser className="w-5 h-5" />
+              <FiPlus className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Grid de clientes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClientes.map(cliente => (
             <ClienteCard
@@ -199,7 +185,6 @@ export default function Clientes() {
         )}
       </div>
 
-      {/* Modal Atualizar */}
       <ModalAtualizarCliente
         isOpen={modalAtualizarOpen}
         onClose={() => setModalAtualizarOpen(false)}
@@ -212,7 +197,6 @@ export default function Clientes() {
         }}
       />
 
-      {/* Modal Detalhes */}
       <ModalDetalhesCliente
         isOpen={modalDetalhesOpen}
         onClose={() => setModalDetalhesOpen(false)}
@@ -220,19 +204,16 @@ export default function Clientes() {
         onEditClient={(cliente) => handleAbrirModalAtualizar(cliente)}
       />
 
-      {/* Modal Cadastrar */}
       <ModalCadastrarCliente
         isOpen={modalCadastrarOpen}
         onClose={() => setModalCadastrarOpen(false)}
         onSave={(novoCliente) => {
-          // Adiciona o novo cliente à lista com formato padronizado
           const clienteComId = {
             ...novoCliente,
-            id: Date.now(), // ID temporário único
-            contato: novoCliente.contato, // Já está correto!
+            id: Date.now(),
+            contato: novoCliente.contato,
             descricao: novoCliente.observacoes || 'Sem descrição'
           };
-          
           setClientes(prev => [...prev, clienteComId]);
           setModalCadastrarOpen(false);
         }}
