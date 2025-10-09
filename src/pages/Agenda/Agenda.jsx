@@ -4,6 +4,7 @@ import { marcarSessaoRealizada, cancelarSessao, buscarSessoesPendentesCliente, b
 import { criarCliente } from '../../services/clienteService'
 import ModalMarcarSessao from "../../components/ModalMarcarSessao";
 import ModalDetalhesCliente from '../../components/ModalDetalhesCliente'
+import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalConfirmarSessaoRealizada from "../../components/ModalConfirmarSessaoRealizada";
 import ModalCancelarSessao from "../../components/ModalCancelarSessao";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
@@ -19,6 +20,7 @@ export default function Agenda() {
   const [modalNovoCliente, setModalNovoCliente] = useState(false);
   const [modalMarcarSessao, setModalMarcarSessao] = useState(false);
   const [modalDetalhesCliente, setModalDetalhesCliente] = useState(false);
+  const [modalAtualizarCliente, setModalAtualizarCliente] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [modalRealizadaOpen, setModalRealizadaOpen] = useState(false);
   const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
@@ -167,6 +169,12 @@ export default function Agenda() {
       console.error('Erro ao buscar detalhes do cliente:', error);
       setErro('Falha ao carregar detalhes do cliente');
     }
+  };
+
+  const handleAbrirModalAtualizar = (cliente) => {
+    setClienteSelecionado(cliente);
+    setModalAtualizarCliente(true);
+    setModalDetalhesCliente(false); // Fechar modal de detalhes
   };
 
   const handleModalSuccess = async (dados = null) => {
@@ -528,8 +536,18 @@ export default function Agenda() {
           isOpen={modalDetalhesCliente}
           onClose={() => setModalDetalhesCliente(false)}
           cliente={clienteSelecionado}
-          onEditClient={(cliente) => {
-            console.log('Editar cliente:', cliente);
+          onEditClient={handleAbrirModalAtualizar}
+        />
+
+        <ModalAtualizarCliente
+          isOpen={modalAtualizarCliente}
+          onClose={() => setModalAtualizarCliente(false)}
+          cliente={clienteSelecionado}
+          onSuccess={(clienteAtualizado) => {
+            console.log('Cliente atualizado:', clienteAtualizado);
+            setModalAtualizarCliente(false);
+            // Recarregar agenda para refletir mudanças
+            carregarAgendaDoDia(chaveData);
           }}
         />
 
@@ -551,5 +569,3 @@ export default function Agenda() {
     </div>
   );
 }
-
-
