@@ -104,17 +104,6 @@ className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none
 </div>
 
 <div>
-<label className="block text-gray-400 mb-1">Descrição</label>
-<textarea
-value={descricao}
-onChange={(e) => setDescricao(e.target.value)}
-placeholder="Descreva o serviço ou observação principal"
-rows="3"
-className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
-/>
-</div>
-
-<div>
 <label className="block text-gray-400 mb-1">Observações</label>
 <textarea
 value={observacoes}
