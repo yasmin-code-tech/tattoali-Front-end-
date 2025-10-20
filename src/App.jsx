@@ -10,6 +10,7 @@ import Perfil from "./pages/Perfil/Perfil";
 import Clientes from "./pages/Clientes/Clientes";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import GeradorImagem from "./pages/GeradorImagem/GeradorImagem";
+import Galeria from "./pages/Galeria/Galeria";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/gerador-imagem" element={<GeradorImagem />} />
             <Route path="/dashboard" element={<Dashboard />} /> 
+            <Route path="/galeria" element={<Galeria />}/>
 
           </Route>
 
