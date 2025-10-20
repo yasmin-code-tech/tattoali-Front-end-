@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom"; // ✅ Import do Link
 import Layout from '../../baselayout/Layout';
 import { buscarPerfilTatuador } from '../../services/perfilService';
 
@@ -21,17 +22,17 @@ const EmailIcon = () => (
   </svg>
 );
 const MapPinIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-        <circle cx="12" cy="10" r="3"></circle>
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </svg>
 );
 const InstagramIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+  </svg>
 );
 
 export default function Perfil() {
@@ -120,6 +121,7 @@ export default function Perfil() {
               </div>
             </div>
 
+            {/* Botões principais */}
             <div className="flex flex-wrap gap-3 justify-center mb-8">
               <button onClick={() => setIsEditModalOpen(true)} className="btn-primary px-6 py-2 rounded-lg font-medium cursor-pointer">
                 Editar Perfil
@@ -127,6 +129,13 @@ export default function Perfil() {
               <button onClick={() => setIsPasswordModalOpen(true)} className="border border-gray-600 text-gray-300 hover:text-white px-6 py-2 rounded-lg transition-colors font-medium cursor-pointer">
                 Alterar Senha
               </button>
+              {/* ✅ Novo botão Ver Portfólio */}
+              <Link
+                to="/galeria"
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium cursor-pointer"
+              >
+                Ver Portfólio
+              </Link>
             </div>
 
             <div className="mb-8">
@@ -144,26 +153,26 @@ export default function Perfil() {
               <h3 className="red-title text-lg font-semibold mb-4">Contato</h3>
               <div className="space-y-2">
                 {perfil.whatsapp && (
-                    <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
-                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                            <WhatsAppIcon />
-                        </div>
-                        <div>
-                            <p className="text-white font-medium">WhatsApp</p>
-                            <p className="text-gray-400">{perfil.whatsapp}</p>
-                        </div>
+                  <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
+                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                      <WhatsAppIcon />
                     </div>
+                    <div>
+                      <p className="text-white font-medium">WhatsApp</p>
+                      <p className="text-gray-400">{perfil.whatsapp}</p>
+                    </div>
+                  </div>
                 )}
                 {perfil.email && (
-                    <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
-                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                            <EmailIcon />
-                        </div>
-                        <div>
-                            <p className="text-white font-medium">E-mail</p>
-                            <p className="text-gray-400">{perfil.email}</p>
-                        </div>
+                  <div className="flex items-center space-x-4 p-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer">
+                    <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                      <EmailIcon />
                     </div>
+                    <div>
+                      <p className="text-white font-medium">E-mail</p>
+                      <p className="text-gray-400">{perfil.email}</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
