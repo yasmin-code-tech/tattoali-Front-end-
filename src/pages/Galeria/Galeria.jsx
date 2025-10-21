@@ -59,9 +59,16 @@ export default function Galeria() {
   */
 
   // Editar
-  const handleEdit = (foto) => {
-    alert(`Editar informações da foto ${foto.id}`);
-  };
+  
+const handleEdit = (fotoAtualizada) => {
+  setPortfolio((prevPortfolio) =>
+    prevPortfolio.map((item) =>
+      item.id === fotoAtualizada.id ? { ...item, ...fotoAtualizada } : item
+    )
+  );
+  setFotoSelecionada(fotoAtualizada); // atualiza o modal com os novos dados
+};
+
 
   // Deletar
   const handleDelete = (foto) => {
