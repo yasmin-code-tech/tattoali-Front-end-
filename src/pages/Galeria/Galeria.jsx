@@ -5,7 +5,6 @@ import { Images, Camera, Plus } from "lucide-react";
 import ModalFoto from "../../components/ModalFoto";
 import ModalUploadFoto from "../../components/ModalUploadFoto";
 
-// Importando imagens locais
 import coringa from "../../assets/coringa.webp";
 import floresRealistas from "../../assets/floresRealistas.jpg";
 import rosa from "../../assets/rosa.webp";
@@ -18,8 +17,9 @@ export default function Galeria() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [novaFoto, setNovaFoto] = useState({ file: null, descricao: "" });
 
+  // 🔹 Opção 1 (atual): usando dados locais
   useEffect(() => {
-    // Simulando carregamento de dados
+    // Simulando carregamento de dados locais
     setTimeout(() => {
       try {
         const dadosFicticios = [
@@ -37,21 +37,52 @@ export default function Galeria() {
     }, 1000);
   }, []);
 
-  // Função de editar
-  const handleEdit = (foto) => {
-    alert(`Editar informações da foto ${foto.id}`);
-  };
-
-  // Função de deletar
-  const handleDelete = (foto) => {
-    const confirm = window.confirm("Tem certeza que deseja apagar?");
-    if (confirm) {
-      setPortfolio((prev) => prev.filter((item) => item.id !== foto.id));
-      setFotoSelecionada(null);
+  // 🔹 Opção 2 (para uso futuro com API real)
+  /*
+  const fetchPortfolio = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("URL_DA_SUA_API/portfolio");
+      const data = await response.json();
+      setPortfolio(data);
+    } catch (error) {
+      console.error(error);
+      setErro("Falha ao carregar o portfólio do servidor.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Função de upload
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
+  */
+
+  // Editar
+  
+const handleEdit = (fotoAtualizada) => {
+  setPortfolio((prevPortfolio) =>
+    prevPortfolio.map((item) =>
+      item.id === fotoAtualizada.id ? { ...item, ...fotoAtualizada } : item
+    )
+  );
+  setFotoSelecionada(fotoAtualizada); // atualiza o modal com os novos dados
+};
+
+
+  // Deletar
+  const handleDelete = (foto) => {
+    const confirmDelete = window.confirm("Tem certeza que deseja apagar?");
+    if (confirmDelete) {
+      setPortfolio((prev) => prev.filter((item) => item.id !== foto.id));
+      setFotoSelecionada(null);
+
+      // 🔹 Futuro (API): descomente para atualizar via backend
+      // fetchPortfolio();
+    }
+  };
+
+  // Upload
   const handleUploadSubmit = (e) => {
     e.preventDefault();
     if (!novaFoto.file) return alert("Escolha uma imagem!");
@@ -66,6 +97,9 @@ export default function Galeria() {
     setPortfolio((prev) => [newItem, ...prev]);
     setNovaFoto({ file: null, descricao: "" });
     setShowUploadModal(false);
+
+    // 🔹 Futuro (API): descomente para atualizar via backend
+    // fetchPortfolio();
   };
 
   if (loading) {
@@ -105,7 +139,6 @@ export default function Galeria() {
               </h2>
               <p className="text-gray-400">Explore as tatuagens já realizadas</p>
 
-              {/* Botão de adicionar foto */}
               <button
                 onClick={() => setShowUploadModal(true)}
                 className="mt-4 flex items-center gap-2 bg-red-500 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-medium transition"
@@ -146,7 +179,7 @@ export default function Galeria() {
           </div>
         </div>
 
-        {/* Modal de detalhes da foto */}
+        {/* Modal de detalhes */}
         <ModalFoto
           foto={fotoSelecionada}
           onClose={() => setFotoSelecionada(null)}
@@ -154,7 +187,7 @@ export default function Galeria() {
           onDelete={handleDelete}
         />
 
-        {/* Modal de upload de foto */}
+        {/* Modal de upload */}
         {showUploadModal && (
           <ModalUploadFoto
             novaFoto={novaFoto}
