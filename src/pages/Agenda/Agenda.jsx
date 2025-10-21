@@ -28,6 +28,10 @@ export default function Agenda() {
   const [filtroVisualizacao, setFiltroVisualizacao] = useState('pendentes'); // 'pendentes', 'realizadas', 'canceladas'
   // 'asc' = mais cedo → mais tarde, 'desc' = mais tarde → mais cedo
   const [ordemHorario, setOrdemHorario] = useState('asc');
+  // Controle se a busca será por data ou por nome
+  const [filtroBusca, setFiltroBusca] = useState('data'); // 'data' ou 'nome'
+  const [valorBusca, setValorBusca] = useState(''); // valor digitado pelo usuário
+
 
 
   const chaveData = useMemo(() => {
@@ -272,7 +276,14 @@ export default function Agenda() {
   };
 
   const handleBuscarAgenda = () => {
-    carregarAgendaDoDia(chaveData);
+    if(filtroBusca === 'data'){
+      carregarAgendaDoDia(chaveData);
+    } else {
+      // Buscar por nome usando valorBusca
+      console.log("Busca por nome:", valorBusca);
+      // Aqui você precisará chamar a função do serviço que filtra sessões por nome
+      // Por exemplo: buscarSessoesPorNome(valorBusca)
+    }
   };
 
   // useEffect para carregar dados iniciais e quando o filtro muda
@@ -304,13 +315,35 @@ export default function Agenda() {
                 </svg>
                 <label htmlFor="agenda-date" className="text-gray-300 text-sm font-medium">Data:</label>
               </div>
-              <input
-                id="agenda-date"
-                type="date"
-                className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none transition-colors min-w-[140px]"
-                value={chaveData}
-                onChange={handleDataChange}
-              />
+              <div className="flex items-center gap-2">
+  <label className="text-gray-300 text-sm font-medium">Buscar por:</label>
+  <select
+    value={filtroBusca}
+    onChange={e => setFiltroBusca(e.target.value)}
+    className="bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
+  >
+    <option value="data">Data</option>
+    <option value="nome">Nome</option>
+  </select>
+</div>
+
+{filtroBusca === 'data' ? (
+  <input
+    type="date"
+    value={chaveData}
+    onChange={handleDataChange}
+    className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[140px]"
+  />
+) : (
+  <input
+    type="text"
+    placeholder="Digite o nome do cliente"
+    value={valorBusca}
+    onChange={(e) => setValorBusca(e.target.value)}
+    className="bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[140px]"
+  />
+)}
+
               <button
                 onClick={handleBuscarAgenda}
                 disabled={loading}
