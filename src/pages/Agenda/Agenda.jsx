@@ -26,6 +26,9 @@ export default function Agenda() {
   const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
   const [sessaoSelecionada, setSessaoSelecionada] = useState(null);
   const [filtroVisualizacao, setFiltroVisualizacao] = useState('pendentes'); // 'pendentes', 'realizadas', 'canceladas'
+  // 'asc' = mais cedo → mais tarde, 'desc' = mais tarde → mais cedo
+  const [ordemHorario, setOrdemHorario] = useState('asc');
+
 
   const chaveData = useMemo(() => {
     console.log('=== CALCULANDO chaveData ===');
@@ -96,8 +99,17 @@ export default function Agenda() {
 
   // Função para obter as sessões baseadas no filtro atual
   const getSessoesAtuais = () => {
-    return Array.isArray(todasSessoesDoDia) ? todasSessoesDoDia : [];
+    const sessoes = Array.isArray(todasSessoesDoDia) ? [...todasSessoesDoDia] : [];
+  
+    sessoes.sort((a, b) => {
+      const horaA = a?.data_atendimento ? new Date(a.data_atendimento).getTime() : Infinity;
+      const horaB = b?.data_atendimento ? new Date(b.data_atendimento).getTime() : Infinity;
+      return ordemHorario === 'asc' ? horaA - horaB : horaB - horaA;
+    });
+  
+    return sessoes;
   };
+  
 
   const handleFiltroChange = (novoFiltro) => {
     setFiltroVisualizacao(novoFiltro);
@@ -378,6 +390,7 @@ export default function Agenda() {
             </button>
           </div>
         </div>
+        
 
         {/* Mensagem de erro */}
         {erro && (
@@ -399,6 +412,34 @@ export default function Agenda() {
             </div>
           </div>
         )}
+
+
+        {/* Botão moderno para ordenar sessões por horário */}
+<button
+  onClick={() => setOrdemHorario(prev => (prev === 'asc' ? 'desc' : 'asc'))}
+  className={`flex items-center gap-2 px-4 py-2 mb-8 rounded-lg font-medium transition-all duration-200 
+    ${ordemHorario === 'asc'
+      ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md hover:shadow-red-500/40'
+      : 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 hover:text-white'}`}
+  title={ordemHorario === 'asc' ? 'Mostrar mais tarde primeiro' : 'Mostrar mais cedo primeiro'}
+>
+  {ordemHorario === 'asc' ? (
+    <>
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+      </svg>
+      <span>Mais Cedo Primeiro</span>
+    </>
+  ) : (
+    <>
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+      </svg>
+      <span>Mais Tarde Primeiro</span>
+    </>
+  )}
+</button>
+
 
         {/* Lista de sessões do dia ou estado vazio */}
         {!loading && todasSessoesDoDia.length === 0 ? (
