@@ -46,7 +46,7 @@ export const atualizarCliente = async (clienteAtualizado) => {
     const dadosBackend = {
       nome: clienteAtualizado.nome,
       telefone: clienteAtualizado.contato,
-      descricao: clienteAtualizado.descricao || clienteAtualizado.observacoes,
+      descricao: clienteAtualizado.observacoes || '',
       endereco: clienteAtualizado.endereco || ''
     };
 
