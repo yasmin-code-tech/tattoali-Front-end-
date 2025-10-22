@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { buscarClientes } from "../services/clienteService";
+import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 
 export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSelecionada }) {
   const [search, setSearch] = useState("");
@@ -7,23 +8,18 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   const [clientes, setClientes] = useState([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [sessoes, setSessoes] = useState([
-    { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "" }
+    { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }
   ]);
   const [modalKey, setModalKey] = useState(0); // Key para forçar re-render
-
-  // Função para limpar o estado do modal
-  const limparEstado = () => {
-    setClienteSelecionado(null);
-    setSearch("");
-    setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "" }]);
-  };
 
   // Carregar clientes e resetar seleção quando o modal abrir
   useEffect(() => {
     console.log('ModalMarcarSessao useEffect executado, isOpen:', isOpen);
     if (isOpen) {
       console.log('Modal aberto, resetando seleção e carregando clientes...');
-      limparEstado(); // Resetar estado
+      setClienteSelecionado(null); // Resetar seleção
+      setSearch(""); // Limpar busca
+      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]); // Resetar sessões
       setModalKey(prev => prev + 1); // Forçar re-render com nova key
       carregarClientes();
     } else {
@@ -55,6 +51,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       setClientes(clientesArray);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
+      notifyError("Erro ao carregar lista de clientes. Tente novamente.");
       setClientes([]);
     } finally {
       setLoadingClientes(false);
@@ -80,11 +77,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   console.log('Cliente selecionado:', clienteSelecionado);
 
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      // Limpar estado antes de fechar
-      limparEstado();
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   const handleChangeSessao = (index, field, value) => {
@@ -104,35 +97,45 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
     }
   };
 
-  const handleSave = () => {
-    if (!clienteSelecionado) {
-      alert("Selecione um cliente!");
-      return;
+  const handleSave = async () => {
+    try {
+      if (!clienteSelecionado) {
+        notifyWarn("Selecione um cliente!");
+        return;
+      }
+      
+      // Validar se todas as sessões têm dados obrigatórios
+      const sessoesValidas = sessoes.every(s => s.data && s.horario && s.valor && s.descricao);
+      if (!sessoesValidas) {
+        notifyWarn("Preencha todos os campos obrigatórios das sessões (data, horário, valor e descrição)!");
+        return;
+      }
+      
+      // Chamar onSuccess com os dados formatados
+      await onSuccess({ 
+        cliente: clienteSelecionado, 
+        sessoes: sessoes.map(s => ({
+          clienteId: clienteSelecionado.client_id || clienteSelecionado.id,
+          data: s.data,
+          horario: s.horario,
+          numeroSessao: s.numeroSessao,
+          valor: s.valor,
+          descricao: s.descricao
+        }))
+      });
+      
+      notifySuccess(`${sessoes.length > 1 ? 'Sessões marcadas' : 'Sessão marcada'} com sucesso para ${clienteSelecionado.nome}!`);
+      
+      // Limpar estados após salvar com sucesso
+      setClienteSelecionado(null);
+      setSearch("");
+      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);
+      
+      onClose();
+    } catch (error) {
+      console.error('Erro ao marcar sessão:', error);
+      notifyError("Erro ao marcar sessão. Tente novamente.");
     }
-    
-    // Validar se todas as sessões têm dados obrigatórios
-    const sessoesValidas = sessoes.every(s => s.data && s.horario && s.valor && s.descricao);
-    if (!sessoesValidas) {
-      alert("Preencha todos os campos obrigatórios das sessões (data, horário, valor e descrição)!");
-      return;
-    }
-    
-    // Chamar onSuccess com os dados formatados
-    onSuccess({ 
-      cliente: clienteSelecionado, 
-      sessoes: sessoes.map(s => ({
-        clienteId: clienteSelecionado.client_id || clienteSelecionado.id,
-        data: s.data,
-        horario: s.horario,
-        numeroSessao: s.numeroSessao,
-        valor: s.valor,
-        descricao: s.descricao
-      }))
-    });
-    
-    // Limpar estado antes de fechar
-    limparEstado();
-    onClose();
   };
 
   return (
@@ -144,11 +147,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       <div className="card p-8 rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">Marcar Sessão</h2>
-          <button onClick={() => {
-            // Limpar estado antes de fechar
-            limparEstado();
-            onClose();
-          }} className="text-gray-400 hover:text-white cursor-pointer">
+          <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -317,11 +316,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
           <div className="flex space-x-4 pt-4">
             <button 
               type="button" 
-              onClick={() => {
-                // Limpar estado antes de fechar
-                limparEstado();
-                onClose();
-              }}
+              onClick={onClose}
               className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium cursor-pointer"
             >
               Cancelar
