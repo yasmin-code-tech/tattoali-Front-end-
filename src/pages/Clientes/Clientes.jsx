@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from '../../baselayout/Layout';
+import { FiUser, FiPlus, FiArrowDown, FiArrowUp } from "react-icons/fi";
 
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
+import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
+import { buscarClientes } from '../../services/clienteService';
 
-const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes }) => (
+const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
@@ -15,14 +18,14 @@ const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes 
 
     <div className="flex justify-between items-center">
       <button
-        onClick={() => onAtualizar({ id, nome, contato, descricao })}
+        onClick={() => onAtualizar({ id, nome, contato, descricao, endereco, observacoes })}
         className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Atualizar Cliente
       </button>
 
       <button
-        onClick={() => onVerDetalhes({ id, nome, contato, descricao })}
+        onClick={() => onVerDetalhes({ id, nome, contato, descricao, endereco, observacoes })}
         className="bg-red-600 hover:bg-red-700 text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Detalhes
@@ -32,61 +35,119 @@ const ClienteCard = ({ id, nome, contato, descricao, onAtualizar, onVerDetalhes 
 );
 
 export default function Clientes() {
-  const clientesMock = [
-    { id: 1, nome: "Maria Clara Santos", contato: "(11) 98765-4321", descricao: "Tatuagem floral no braço direito" },
-    { id: 2, nome: "João Silva", contato: "(11) 99876-5432", descricao: "Tatuagem tribal nas costas" },
-    { id: 3, nome: "Ana Santos", contato: "(11) 97654-3210", descricao: "Retoque em tatuagem antiga" },
-    { id: 4, nome: "Carlos Mendes", contato: "(11) 96543-2109", descricao: "Tatuagem realista no antebraço" },
-  ];
-
-  const [clientes, setClientes] = useState(clientesMock);
+  const [clientes, setClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // estados dos modais
   const [modalAtualizarOpen, setModalAtualizarOpen] = useState(false);
   const [modalCadastrarOpen, setModalCadastrarOpen] = useState(false);
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
 
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
 
-  // Função para remover acentos
-  const removerAcentos = (str) => {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // true = crescente, false = decrescente
+  const [ordemCrescente, setOrdemCrescente] = useState(true);
+
+  const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // Função para carregar clientes da API
+  const carregarClientes = async () => {
+    try {
+      setLoading(true);
+      const clientesDaAPI = await buscarClientes();
+
+      // Ordena os clientes por nome inicialmente
+      const clientesOrdenados = clientesDaAPI.sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' })
+      );
+
+      setClientes(clientesOrdenados);
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+      alert('Erro ao carregar clientes. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Carregar clientes quando o componente monta
+  useEffect(() => {
+    carregarClientes();
+  }, []);
 
   const handleBuscarClientes = async () => {
-    setLoading(true);
-    // Simula delay de API
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // aqui você pode chamar a API real. Por enquanto re-carrego o mock
-    setClientes(clientesMock);
-    setLoading(false);
+    await carregarClientes();
   };
 
-  const filteredClientes = clientes.filter(cliente =>
-    removerAcentos(cliente.nome.toLowerCase()).includes(
-      removerAcentos(searchTerm.toLowerCase())
+  // Alterna a ordem crescente/decrescente
+  const toggleOrdem = () => setOrdemCrescente(prev => !prev);
+
+  const filteredClientes = clientes
+    .filter(cliente =>
+      removerAcentos(cliente.nome.toLowerCase()).includes(
+        removerAcentos(searchTerm.toLowerCase())
+      )
     )
-  );
+    .sort((a, b) =>
+      ordemCrescente
+        ? a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' })
+        : b.nome.localeCompare(a.nome, 'pt', { sensitivity: 'base' })
+    );
 
   const handleAbrirModalAtualizar = (cliente) => {
     setClienteSelecionado(cliente);
     setModalAtualizarOpen(true);
   };
 
-  const handleAbrirModalDetalhes = (cliente) => {
-    // Agora os dados já estão no formato correto!
-    const clienteParaModal = {
-      ...cliente,
-      endereco: 'Endereço não informado',
-      observacoes: cliente.descricao,
-      sessoes: [], // Por enquanto vazio, pode ser implementado depois
-      proximasSessoes: [] // Por enquanto vazio, pode ser implementado depois
-    };
-    
-    setClienteSelecionado(clienteParaModal);
-    setModalDetalhesOpen(true);
+  const handleAbrirModalDetalhes = async (cliente) => {
+    try {
+      const [sessoesRealizadas, sessoesPendentes, sessoesCanceladas] = await Promise.all([
+        buscarSessoesRealizadasCliente(cliente.id),
+        buscarSessoesPendentesCliente(cliente.id),
+        buscarSessoesCanceladasCliente(cliente.id)
+      ]);
+
+      const clienteParaModal = {
+        ...cliente,
+        endereco: cliente.endereco || 'Endereço não informado',
+        observacoes: cliente.descricao,
+        sessoes: sessoesRealizadas.map(sessao => ({
+          data: sessao.data_atendimento,
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0'
+        })),
+        proximasSessoes: sessoesPendentes.map(sessao => ({
+          data: sessao.data_atendimento,
+          horario: new Date(sessao.data_atendimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0'
+        })),
+        sessoesCanceladas: sessoesCanceladas.map(sessao => ({
+          data: sessao.data_atendimento,
+          numeroSessao: sessao.numero_sessao,
+          descricao: sessao.descricao,
+          valor: sessao.valor_sessao || '0',
+          motivo: sessao.motivo || ''
+        }))
+      };
+
+      setClienteSelecionado(clienteParaModal);
+      setModalDetalhesOpen(true);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do cliente:', error);
+      const clienteParaModal = {
+        ...cliente,
+        endereco: cliente.endereco || 'Endereço não informado',
+        observacoes: cliente.descricao,
+        sessoes: [],
+        proximasSessoes: [],
+        sessoesCanceladas: []
+      };
+      setClienteSelecionado(clienteParaModal);
+      setModalDetalhesOpen(true);
+    }
   };
 
   const handleAbrirModalCadastrar = () => {
@@ -96,19 +157,17 @@ export default function Clientes() {
   return (
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Clientes</h1>
             <p className="text-gray-400">Gerencie informações dos seus clientes</p>
           </div>
 
-          {/* Área de busca + botões */}
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-2 border border-gray-700">
               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
@@ -120,24 +179,34 @@ export default function Clientes() {
               <button
                 onClick={handleBuscarClientes}
                 disabled={loading}
-                className={`ml-2 px-4 py-2 rounded-lg font-medium text-white transition ${
-                  loading ? "bg-gray-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-                }`}
+                className={`ml-2 px-4 py-2 rounded-lg font-medium text-white transition ${loading ? "bg-gray-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {loading ? "Buscando..." : "Buscar"}
               </button>
             </div>
 
+            {/* Botão para alternar ordem */}
+            <button
+              onClick={toggleOrdem}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+              title="Alternar ordem"
+            >
+              Ordem {ordemCrescente ? 'A-Z' : 'Z-A'}
+              {ordemCrescente ? <FiArrowDown /> : <FiArrowUp />}
+            </button>
+
+            {/* Botão adicionar cliente */}
             <button
               onClick={handleAbrirModalCadastrar}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              title="Adicionar Cliente"
             >
-              Adicionar Cliente
+              <FiUser className="w-5 h-5" />
+              <FiPlus className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Grid de clientes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClientes.map(cliente => (
             <ClienteCard
@@ -154,12 +223,11 @@ export default function Clientes() {
         )}
       </div>
 
-      {/* Modal Atualizar */}
       <ModalAtualizarCliente
         isOpen={modalAtualizarOpen}
         onClose={() => setModalAtualizarOpen(false)}
         cliente={clienteSelecionado}
-        onUpdate={(clienteAtualizado) => {
+        onSuccess={(clienteAtualizado) => {
           setClientes(prev =>
             prev.map(c => c.id === clienteAtualizado.id ? clienteAtualizado : c)
           );
@@ -167,7 +235,6 @@ export default function Clientes() {
         }}
       />
 
-      {/* Modal Detalhes */}
       <ModalDetalhesCliente
         isOpen={modalDetalhesOpen}
         onClose={() => setModalDetalhesOpen(false)}
@@ -175,19 +242,16 @@ export default function Clientes() {
         onEditClient={(cliente) => handleAbrirModalAtualizar(cliente)}
       />
 
-      {/* Modal Cadastrar */}
       <ModalCadastrarCliente
         isOpen={modalCadastrarOpen}
         onClose={() => setModalCadastrarOpen(false)}
         onSave={(novoCliente) => {
-          // Adiciona o novo cliente à lista com formato padronizado
           const clienteComId = {
             ...novoCliente,
-            id: Date.now(), // ID temporário único
-            contato: novoCliente.contato, // Já está correto!
+            id: Date.now(),
+            contato: novoCliente.contato,
             descricao: novoCliente.observacoes || 'Sem descrição'
           };
-          
           setClientes(prev => [...prev, clienteComId]);
           setModalCadastrarOpen(false);
         }}

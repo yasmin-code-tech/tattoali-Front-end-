@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, User, Calendar, Image, LayoutDashboard, Users, LogOut } from "lucide-react";
+import { Menu, User, Calendar, Image, LayoutDashboard, Users, LogOut,Camera } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 
 
@@ -77,6 +77,11 @@ export default function Sidebar() {
             className="flex items-center px-6 py-3 text-gray-300 hover:bg-red-900/20 hover:text-white"
           >
             <Users className="w-5 h-5 mr-3" /> Clientes
+          </Link>
+
+          <Link to="/galeria"
+          className="flex items-center px-6 py-3 text-gray-300 hover:bg-red-900/20 hover:text-white">
+            <Camera className="w-5 h-5 mr-3" /> Galeria
           </Link>
         </nav>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
+import { atualizarCliente } from "../services/clienteService";
 
 const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
   const [nome, setNome] = useState('');
@@ -7,14 +8,15 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
   const [endereco, setEndereco] = useState('');
   const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (cliente) {
       setNome(cliente.nome || '');
-      setContato(cliente.contato || '');
+      setContato(cliente.contato || cliente.telefone || '');
       setEndereco(cliente.endereco || '');
       setDescricao(cliente.descricao || '');
-      setObservacoes(cliente.observacoes || '');
+      setObservacoes(cliente.observacoes || cliente.descricao || '');
     }
   }, [cliente, isOpen]);
 
@@ -22,18 +24,23 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
 
   const handleUpdate = async () => {
     try {
+      setLoading(true);
+
+      // Validação dos campos obrigatórios
       if (!nome.trim()) {
         notifyWarn("O nome do cliente é obrigatório!");
+        setLoading(false);
         return;
       }
 
       if (!contato.trim()) {
         notifyWarn("O contato do cliente é obrigatório!");
+        setLoading(false);
         return;
       }
 
       const clienteAtualizado = { 
-        ...cliente,
+        id: cliente.id || cliente.client_id,
         nome,
         contato,
         endereco,
@@ -41,13 +48,22 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
         observacoes 
       };
 
-      await onUpdate(clienteAtualizado);
+      // Atualizar no backend
+      await atualizarCliente(clienteAtualizado);
       
       notifySuccess(`Cliente ${nome} atualizado com sucesso!`);
+      
+      // Se onUpdate foi passado, chamar também (para atualizar a lista no componente pai)
+      if (onUpdate && typeof onUpdate === 'function') {
+        onUpdate(clienteAtualizado);
+      }
+      
       onClose();
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
       notifyError("Erro ao atualizar cliente. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,6 +77,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
           <button 
             onClick={onClose} 
             className="text-gray-400 hover:text-white transition-colors"
+            disabled={loading}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -79,6 +96,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               onChange={(e) => setNome(e.target.value)}
               placeholder="Digite o nome do cliente"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              disabled={loading}
             />
           </div>
 
@@ -90,6 +108,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               onChange={(e) => setContato(e.target.value)}
               placeholder="Digite o telefone do cliente"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              disabled={loading}
             />
           </div>
 
@@ -101,6 +120,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               onChange={(e) => setEndereco(e.target.value)}
               placeholder="Digite o endereço completo"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              disabled={loading}
             />
           </div>
 
@@ -112,6 +132,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               placeholder="Descreva o serviço ou observação principal"
               rows="3"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+              disabled={loading}
             />
           </div>
 
@@ -123,6 +144,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
               placeholder="Adicione observações adicionais"
               rows="3"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+              disabled={loading}
             />
           </div>
         </div>
@@ -133,15 +155,27 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
             type="button" 
             onClick={onClose}
             className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium"
+            disabled={loading}
           >
             Cancelar
           </button>
           <button 
             type="button" 
             onClick={handleUpdate}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium"
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
           >
-            Salvar Alterações
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Salvando...
+              </span>
+            ) : (
+              'Salvar Alterações'
+            )}
           </button>
         </div>
       </div>

@@ -191,6 +191,37 @@ async function mockApiFetch(path, options = {}) {
     return { token: "mock-token-123-refreshed", refreshToken: "mock-refresh-456" };
   }
 
+  // Mock geração de imagem
+  if (path === "/api/image/generate" && method === "POST") {
+    const body = safeParse(options.body) || {};
+    const prompt = body.prompt || "tattoo design";
+    // Simula que backend retorna URL (ex.: link do bucket)
+    const encoded = encodeURIComponent(prompt).replace(/%20/g, "+");
+    return {
+      imageUrl: `https://placehold.co/800x800?text=${encoded}`,
+      message: "Imagem gerada com sucesso (mock)",
+    };
+  }
+
+  // Mock para recuperação de senha
+  if ((path === "/auth/forgot-password" || path === "/api/user/forgot-password") && method === "POST") {
+    const body = safeParse(options.body) || {};
+    const email = body.email;
+    
+    if (!email) {
+      const err = new Error("E-mail é obrigatório");
+      err.status = 400;
+      err.data = { message: "E-mail é obrigatório" };
+      throw err;
+    }
+
+    // Simula envio de e-mail de recuperação
+    return { 
+      message: "Instruções para redefinir sua senha foram enviadas para o seu e-mail.",
+      success: true 
+    };
+  }
+
   // Mock para clientes
   if (path === "/api/client" && method === "GET") {
     if (!auth?.token) {

@@ -10,22 +10,24 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   const [sessoes, setSessoes] = useState([
     { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }
   ]);
-  const [modalKey, setModalKey] = useState(0); 
+  const [modalKey, setModalKey] = useState(0); // Key para forçar re-render
 
+  // Carregar clientes e resetar seleção quando o modal abrir
   useEffect(() => {
     console.log('ModalMarcarSessao useEffect executado, isOpen:', isOpen);
     if (isOpen) {
       console.log('Modal aberto, resetando seleção e carregando clientes...');
-      setClienteSelecionado(null); 
-      setSearch(""); 
-      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]); 
-      setModalKey(prev => prev + 1); 
+      setClienteSelecionado(null); // Resetar seleção
+      setSearch(""); // Limpar busca
+      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]); // Resetar sessões
+      setModalKey(prev => prev + 1); // Forçar re-render com nova key
       carregarClientes();
     } else {
       console.log('Modal fechado');
     }
   }, [isOpen, dataSelecionada]);
 
+  // Garantir que após carregar clientes, nenhum esteja selecionado
   useEffect(() => {
     if (clientes.length > 0 && clienteSelecionado !== null) {
       console.log('Clientes carregados mas há uma seleção prévia, resetando...');
@@ -102,12 +104,14 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
         return;
       }
       
+      // Validar se todas as sessões têm dados obrigatórios
       const sessoesValidas = sessoes.every(s => s.data && s.horario && s.valor && s.descricao);
       if (!sessoesValidas) {
         notifyWarn("Preencha todos os campos obrigatórios das sessões (data, horário, valor e descrição)!");
         return;
       }
       
+      // Chamar onSuccess com os dados formatados
       await onSuccess({ 
         cliente: clienteSelecionado, 
         sessoes: sessoes.map(s => ({
@@ -122,6 +126,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       
       notifySuccess(`${sessoes.length > 1 ? 'Sessões marcadas' : 'Sessão marcada'} com sucesso para ${clienteSelecionado.nome}!`);
       
+      // Limpar estados após salvar com sucesso
       setClienteSelecionado(null);
       setSearch("");
       setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);

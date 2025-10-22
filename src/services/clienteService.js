@@ -11,24 +11,51 @@ import { api } from "../lib/api";
 export const criarCliente = async (dadosCliente) => {
   try {
     console.log('Criando novo cliente:', dadosCliente);
-    
-    // Mapear dados do frontend para o formato do backend
+
     const dadosBackend = {
       nome: dadosCliente.nome,
       telefone: dadosCliente.telefone || dadosCliente.contato,
-      descricao: dadosCliente.descricao || dadosCliente.observacoes
+      descricao: dadosCliente.descricao || dadosCliente.observacoes,
+      endereco: dadosCliente.endereco || ''
     };
-    
-    console.log('Dados do frontend:', dadosCliente);
+
     console.log('Dados para o backend:', dadosBackend);
-    
+
     const response = await api.post('/api/client', dadosBackend);
     console.log('Cliente criado com sucesso:', response);
-    console.log('Tipo da resposta:', typeof response);
     return response;
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
     throw new Error('Falha ao cadastrar cliente');
+  }
+};
+
+/**
+ * Atualiza um cliente existente
+ * @param {Object} clienteAtualizado - Dados do cliente
+ * @param {number} clienteAtualizado.id - ID do cliente
+ * @param {string} clienteAtualizado.nome
+ * @param {string} clienteAtualizado.contato
+ * @param {string} clienteAtualizado.endereco
+ * @param {string} clienteAtualizado.descricao
+ * @param {string} clienteAtualizado.observacoes
+ * @returns {Promise<Object>} Cliente atualizado
+ */
+export const atualizarCliente = async (clienteAtualizado) => {
+  try {
+    const dadosBackend = {
+      nome: clienteAtualizado.nome,
+      telefone: clienteAtualizado.contato,
+      descricao: clienteAtualizado.observacoes || '',
+      endereco: clienteAtualizado.endereco || ''
+    };
+
+    const response = await api.put(`/api/client/${clienteAtualizado.id}`, dadosBackend);
+    console.log('Cliente atualizado com sucesso:', response);
+    return response;
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    throw new Error('Falha ao atualizar cliente');
   }
 };
 
@@ -39,18 +66,22 @@ export const criarCliente = async (dadosCliente) => {
 export const buscarClientes = async () => {
   try {
     console.log('Buscando clientes...');
-    
+
     const response = await api.get('/api/client');
-    console.log('Resposta da API de clientes:', response);
-    console.log('Tipo da resposta:', typeof response);
-    console.log('É array?', Array.isArray(response));
-    
-    // A resposta já é o array de clientes, não precisa de .data
-    const clientes = response;
-    console.log('Clientes finais:', clientes);
-    
-    // Garantir que sempre retornamos um array
-    return Array.isArray(clientes) ? clientes : [];
+    console.log('Clientes retornados:', response);
+
+    // Mapear client_id para id e campos para compatibilidade com o frontend
+    const clientesMapeados = Array.isArray(response) 
+      ? response.map(cliente => ({
+          ...cliente,
+          id: cliente.client_id, // Mapear client_id para id
+          contato: cliente.telefone, // Mapear telefone para contato
+          observacoes: cliente.descricao // Mapear descricao para observacoes
+        }))
+      : [];
+
+    console.log('Clientes mapeados:', clientesMapeados);
+    return clientesMapeados;
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     throw new Error('Falha ao carregar clientes');
@@ -65,14 +96,21 @@ export const buscarClientes = async () => {
 export const buscarClientePorId = async (clienteId) => {
   try {
     console.log('Buscando cliente por ID:', clienteId);
-    
+
     const response = await api.get(`/api/client/${clienteId}`);
-    console.log('Cliente encontrado:', response.data);
-    return response.data;
+    console.log('Cliente encontrado:', response);
+
+    // Mapear client_id para id e campos para compatibilidade com o frontend
+    const clienteMapeado = {
+      ...response,
+      id: response.client_id, // Mapear client_id para id
+      contato: response.telefone, // Mapear telefone para contato
+      observacoes: response.descricao // Mapear descricao para observacoes
+    };
+
+    return clienteMapeado;
   } catch (error) {
     console.error('Erro ao buscar cliente:', error);
     throw new Error('Falha ao carregar dados do cliente');
   }
 };
-
-

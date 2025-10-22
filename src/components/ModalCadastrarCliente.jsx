@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService"; 
+// ✅ 1. Importe notifySuccess, notifyError E notifyWarn
+import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService"; // Ajuste o caminho se necessário
+
 const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState(''); 
+  const [telefone, setTelefone] = useState(''); // Mudado de 'contato' para 'telefone' para consistência
   const [endereco, setEndereco] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Limpa o formulário quando o modal é fechado ou aberto
   useEffect(() => {
     if (isOpen) {
       setNome('');
@@ -18,8 +21,10 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   }, [isOpen]);
 
   const handleSave = async () => {
+    // ✅ 2. VALIDAÇÃO ATUALIZADA com notifyWarn
     if (!nome.trim() || !telefone.trim()) {
-      notifyWarn("Por favor, preencha todos os campos obrigatórios (Nome e Contato)."); 
+      // alert("Por favor, preencha todos os campos obrigatórios (Nome e Contato)."); // <-- REMOVIDO
+      notifyWarn("Por favor, preencha todos os campos obrigatórios (Nome e Contato)."); // <-- ADICIONADO
       return;
     }
 
@@ -29,17 +34,17 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
       const novoCliente = { nome, telefone, endereco, observacoes };
       
       if (onSave) {
-        await onSave(novoCliente);
+        await onSave(novoCliente); // Chama a função onSave (que deve ser uma Promise)
       }
       
-      notifySuccess("Cliente cadastrado com sucesso!"); 
-      onClose(); 
+      notifySuccess("Cliente cadastrado com sucesso!"); // Notificação de sucesso
+      onClose(); // Fecha o modal
 
     } catch (error) {
-      notifyError(error.message || "Falha ao cadastrar o cliente."); 
+      notifyError(error.message || "Falha ao cadastrar o cliente."); // Notificação de erro
       console.error("Erro ao cadastrar cliente:", error);
     } finally {
-      setIsSubmitting(false); 
+      setIsSubmitting(false); // Finaliza o estado de carregamento
     }
   };
 

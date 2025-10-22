@@ -326,13 +326,13 @@ export default function Agenda() {
             {/* Lado Esquerdo: Filtros de Visualização */}
             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
               <button onClick={() => handleFiltroChange('pendentes')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'pendentes' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
-                Sessões Pendentes
+                Pendentes
               </button>
               <button onClick={() => handleFiltroChange('realizadas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'realizadas' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
-                Sessões Realizadas
+                Realizadas
               </button>
-              <button onClick={() => handleFiltroChange('canceladas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'canceladas' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
-                Sessões Canceladas
+              <button onClick={() => handleFiltroChange('canceladas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'canceladas' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
+                Canceladas
               </button>
             </div>
             {/* Lado Direito: Botão de Ordenação */}

@@ -141,9 +141,9 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
           <div className="bg-gray-900 p-8 rounded-2xl">
             <h3 className="text-lg font-semibold text-white mb-6">Sessões Realizadas</h3>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
               {cliente.sessoes && cliente.sessoes.length > 0 ? (
-                cliente.sessoes.map((sessao, index) => (
+                cliente.sessoes.slice(0, 5).map((sessao, index) => (
                   <div key={index} className="bg-gray-800 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-white font-medium">
@@ -167,6 +167,14 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
                   <p>Nenhuma sessão realizada ainda</p>
                 </div>
               )}
+              
+              {/* Indicador de mais sessões */}
+              {cliente.sessoes && cliente.sessoes.length > 5 && (
+                <div className="text-center text-gray-500 text-sm py-2 border-t border-gray-700 mt-4">
+                  <p>Mostrando as 5 sessões mais recentes</p>
+                  <p className="text-xs">Total: {cliente.sessoes.length} sessões</p>
+                </div>
+              )}
             </div>
 
             {cliente.sessoes && cliente.sessoes.length > 0 && (
@@ -179,6 +187,54 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
                 </div>
               </div>
             )}
+
+            {/* Sessões Canceladas */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-white mb-6">Sessões Canceladas</h3>
+              
+              <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                {cliente.sessoesCanceladas && cliente.sessoesCanceladas.length > 0 ? (
+                  cliente.sessoesCanceladas.slice(0, 5).map((sessao, index) => (
+                    <div key={index} className="bg-gray-800 rounded-lg p-4 border-l-4 border-red-500">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-medium">
+                          {formatDate(sessao.data)}
+                        </span>
+                        <span className="text-red-400 font-semibold">
+                          Cancelada
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-2">
+                        {sessao.numeroSessao}ª sessão - {sessao.descricao || 'Sem descrição'}
+                      </p>
+                      {sessao.motivo && (
+                        <div className="bg-red-900/20 rounded p-2 mt-2">
+                          <p className="text-red-300 text-xs">
+                            <span className="font-semibold">Motivo:</span> {sessao.motivo}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <p>Nenhuma sessão cancelada</p>
+                  </div>
+                )}
+                
+                {/* Indicador de mais sessões canceladas */}
+                {cliente.sessoesCanceladas && cliente.sessoesCanceladas.length > 5 && (
+                  <div className="text-center text-gray-500 text-sm py-2 border-t border-gray-700 mt-4">
+                    <p>Mostrando as 5 sessões canceladas mais recentes</p>
+                    <p className="text-xs">Total: {cliente.sessoesCanceladas.length} sessões canceladas</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
-//import { useEffect } from "react";
+import ModalEsqueciSenha from "../../components/ModalEsqueciSenha";
+
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -9,16 +10,12 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
 
-//   useEffect(() => {
-//   if (isAuthenticated) {
-//     navigate("/agenda", { replace: true });
-//   }
-// }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,6 +103,17 @@ export default function Login() {
             >
               {submitting ? "Entrando..." : "Entrar"}
             </button>
+
+            {/* Link Esqueci minha senha */}
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                className="text-gray-400 hover:text-red-500 hover:underline text-sm transition-colors"
+                onClick={() => setShowForgotPasswordModal(true)}
+              >
+                Esqueci minha senha
+              </button>
+            </div>
           </form>
 
           {/* Barra de Criar Conta */}
@@ -117,6 +125,12 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Modal Esqueci Senha */}
+      <ModalEsqueciSenha 
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+      />
     </div>
   );
 }
