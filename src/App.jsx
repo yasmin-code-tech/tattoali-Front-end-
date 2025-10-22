@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
@@ -50,6 +52,18 @@ export default function App() {
           {/* fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+                <ToastContainer
+          position="top-right"
+          autoClose={3000} 
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark" 
+        />
       </AuthProvider>
     </Router>
   );

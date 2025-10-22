@@ -28,10 +28,12 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" />
-              </svg>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+              <img 
+                src="/icon-tattooali.png" 
+                alt="Logo TattooAli"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Gestor</h1>

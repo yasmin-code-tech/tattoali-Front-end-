@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { atualizarDadosPerfil, atualizarFotoPerfil, buscarTodosEstilos } from "../services/perfilService"; 
+import { atualizarDadosPerfil, atualizarFotoPerfil, buscarTodosEstilos } from "../services/perfilService";
+import { notifySuccess, notifyError } from "../services/notificationService"; 
 
 const FALLBACK_STYLES = [
   "Realismo", "Tribal", "Floral", "Blackwork", "Aquarela", "Neotrad", "Old School", "Pontilhismo", "Geométrico", "Japonês", "Lettering", "Maori", "Biomecânico"
@@ -27,7 +28,7 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
     };
 
     if (isOpen) {
-      loadData();
+      loadData(); 
       if (perfilAtual) {
         setFormData({
           nome: perfilAtual.nome || '',
@@ -44,28 +45,35 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
         setSubmitError(null);
       }
     }
-  }, [isOpen, perfilAtual]);
+  }, [isOpen, perfilAtual]); 
 
   if (!isOpen) return null;
 
-  const handleOverlayClick = (e) => { if (e.target === e.currentTarget) onClose(); };
-  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfileImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setProfileImageFile(file); 
+      setImagePreview(URL.createObjectURL(file)); 
     }
   };
+
   const handleToggleStyle = (styleName) => {
-    setSelectedStyles(prev => 
+    setSelectedStyles(prev =>
       prev.includes(styleName) ? prev.filter(s => s !== styleName) : [...prev, styleName]
     );
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setSubmitError(null);
+    setIsSubmitting(true); 
+    setSubmitError(null); 
 
     try {
       const updatePromises = [];
@@ -73,11 +81,11 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
       const estiloIds = selectedStyles.map(styleName => {
           const styleObj = allApiStyles.find(s => s.nome === styleName);
           return styleObj ? styleObj.id : null;
-      }).filter(id => id !== null);
-      
+      }).filter(id => id !== null); 
+
       const payloadTexto = {
         ...formData,
-        especialidades: estiloIds,
+        especialidades: estiloIds, 
       };
 
       updatePromises.push(atualizarDadosPerfil(payloadTexto));
@@ -90,14 +98,17 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
 
       await Promise.all(updatePromises);
 
-      alert("Perfil salvo com sucesso!");
-      onSuccess();
-      onClose();
+      notifySuccess("Perfil atualizado com sucesso!"); 
+      onSuccess(); 
+      onClose();   
 
     } catch (error) {
-      setSubmitError(error.message || "Erro ao salvar. Tente novamente.");
+      const errorMessage = error.message || "Erro ao salvar. Tente novamente.";
+      notifyError(errorMessage); 
+      setSubmitError(errorMessage); 
+      console.error("Erro no handleSubmit:", error); 
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); 
     }
   };
 
@@ -112,10 +123,10 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
             </svg>
           </button>
         </div>
-        
+
         <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
           <div className="text-center">
-            <div className="w-32 h-32 rounded-full mx-auto mb-4 bg-gray-800 flex items-center justify-center overflow-hidden">
+            <div className="w-32 h-32 rounded-full mx-auto mb-4 bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-gray-700">
               {imagePreview ? (
                 <img src={imagePreview} alt="Prévia do perfil" className="w-full h-full object-cover" />
               ) : (
@@ -132,42 +143,42 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
               <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Nome</label>
-                <input type="text" name="nome" value={formData.nome} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
+                <input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Sobrenome</label>
-                <input type="text" name="sobrenome" value={formData.sobrenome} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
+                <input type="text" name="sobrenome" value={formData.sobrenome || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Bio</label>
-                <textarea name="bio" value={formData.bio} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg h-24 resize-none" placeholder="Conte um pouco sobre você..."></textarea>
+                <textarea name="bio" value={formData.bio || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg h-24 resize-none" placeholder="Conte um pouco sobre você..."></textarea>
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Endereço do Estúdio</label>
-                <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" placeholder="Rua, número, cidade..."/>
+                <input type="text" name="endereco" value={formData.endereco || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" placeholder="Rua, número, cidade..."/>
               </div>
             </div>
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">WhatsApp</label>
-                <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
+                <input type="tel" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">E-mail</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
+                <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Instagram</label>
-                <input type="text" name="instagram" value={formData.instagram} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" placeholder="@seuinstagram"/>
+                <input type="text" name="instagram" value={formData.instagram || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" placeholder="@seuinstagram"/>
               </div>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-white mb-3">Estilos de Tatuagem</label>
             <div className="mb-4 p-4 border border-gray-700 rounded-lg">
@@ -183,7 +194,7 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
                     ))}
                 </div>
             </div>
-            
+
             <div>
                 <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Selecionados</h4>
                 <div className="flex flex-wrap min-h-[40px] p-2 border border-dashed border-gray-600 rounded-lg">
@@ -198,16 +209,28 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
                 </div>
             </div>
           </div>
-          
+
           {submitError && (
-            <div className="text-center p-3 bg-red-900/50 text-red-300 rounded-lg text-sm">{submitError}</div>
+            <div className="text-center p-3 bg-red-900/50 text-red-300 rounded-lg text-sm">
+              {submitError}
+            </div>
           )}
 
           <div className="flex space-x-4 pt-4">
-            <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 border border-gray-600 text-gray-300 hover:text-white py-3 rounded-lg transition-colors font-medium cursor-pointer disabled:opacity-50"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="flex-1 btn-primary py-3 rounded-lg font-medium cursor-pointer flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 btn-primary py-3 rounded-lg font-medium cursor-pointer flex items-center justify-center disabled:bg-gray-600 disabled:cursor-not-allowed"
+            >
               {isSubmitting ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

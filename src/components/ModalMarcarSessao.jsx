@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { buscarClientes } from "../services/clienteService";
+import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 
 export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSelecionada }) {
   const [search, setSearch] = useState("");
@@ -7,25 +8,24 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   const [clientes, setClientes] = useState([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [sessoes, setSessoes] = useState([
-    { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "" }
+    { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }
   ]);
-  const [modalKey, setModalKey] = useState(0); // Key para forçar re-render
+  const [modalKey, setModalKey] = useState(0); 
 
-  // Carregar clientes e resetar seleção quando o modal abrir
   useEffect(() => {
     console.log('ModalMarcarSessao useEffect executado, isOpen:', isOpen);
     if (isOpen) {
       console.log('Modal aberto, resetando seleção e carregando clientes...');
-      setClienteSelecionado(null); // Resetar seleção
-      setSearch(""); // Limpar busca
-      setModalKey(prev => prev + 1); // Forçar re-render com nova key
+      setClienteSelecionado(null); 
+      setSearch(""); 
+      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]); 
+      setModalKey(prev => prev + 1); 
       carregarClientes();
     } else {
       console.log('Modal fechado');
     }
-  }, [isOpen]);
+  }, [isOpen, dataSelecionada]);
 
-  // Garantir que após carregar clientes, nenhum esteja selecionado
   useEffect(() => {
     if (clientes.length > 0 && clienteSelecionado !== null) {
       console.log('Clientes carregados mas há uma seleção prévia, resetando...');
@@ -49,6 +49,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       setClientes(clientesArray);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
+      notifyError("Erro ao carregar lista de clientes. Tente novamente.");
       setClientes([]);
     } finally {
       setLoadingClientes(false);
@@ -94,32 +95,42 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
     }
   };
 
-  const handleSave = () => {
-    if (!clienteSelecionado) {
-      alert("Selecione um cliente!");
-      return;
+  const handleSave = async () => {
+    try {
+      if (!clienteSelecionado) {
+        notifyWarn("Selecione um cliente!");
+        return;
+      }
+      
+      const sessoesValidas = sessoes.every(s => s.data && s.horario && s.valor && s.descricao);
+      if (!sessoesValidas) {
+        notifyWarn("Preencha todos os campos obrigatórios das sessões (data, horário, valor e descrição)!");
+        return;
+      }
+      
+      await onSuccess({ 
+        cliente: clienteSelecionado, 
+        sessoes: sessoes.map(s => ({
+          clienteId: clienteSelecionado.client_id || clienteSelecionado.id,
+          data: s.data,
+          horario: s.horario,
+          numeroSessao: s.numeroSessao,
+          valor: s.valor,
+          descricao: s.descricao
+        }))
+      });
+      
+      notifySuccess(`${sessoes.length > 1 ? 'Sessões marcadas' : 'Sessão marcada'} com sucesso para ${clienteSelecionado.nome}!`);
+      
+      setClienteSelecionado(null);
+      setSearch("");
+      setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);
+      
+      onClose();
+    } catch (error) {
+      console.error('Erro ao marcar sessão:', error);
+      notifyError("Erro ao marcar sessão. Tente novamente.");
     }
-    
-    // Validar se todas as sessões têm dados obrigatórios
-    const sessoesValidas = sessoes.every(s => s.data && s.horario && s.valor && s.descricao);
-    if (!sessoesValidas) {
-      alert("Preencha todos os campos obrigatórios das sessões (data, horário, valor e descrição)!");
-      return;
-    }
-    
-    // Chamar onSuccess com os dados formatados
-    onSuccess({ 
-      cliente: clienteSelecionado, 
-      sessoes: sessoes.map(s => ({
-        clienteId: clienteSelecionado.client_id || clienteSelecionado.id,
-        data: s.data,
-        horario: s.horario,
-        numeroSessao: s.numeroSessao,
-        valor: s.valor,
-        descricao: s.descricao
-      }))
-    });
-    onClose();
   };
 
   return (

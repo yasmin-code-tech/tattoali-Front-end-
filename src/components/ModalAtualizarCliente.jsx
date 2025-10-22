@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 
 const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
   const [nome, setNome] = useState('');
@@ -19,17 +20,35 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
 
   if (!isOpen) return null;
 
-  const handleUpdate = () => {
-    const clienteAtualizado = { 
-      ...cliente,
-      nome,
-      contato,
-      endereco,
-      descricao,
-      observacoes 
-    };
-    if (onUpdate) onUpdate(clienteAtualizado);
-    onClose();
+  const handleUpdate = async () => {
+    try {
+      if (!nome.trim()) {
+        notifyWarn("O nome do cliente é obrigatório!");
+        return;
+      }
+
+      if (!contato.trim()) {
+        notifyWarn("O contato do cliente é obrigatório!");
+        return;
+      }
+
+      const clienteAtualizado = { 
+        ...cliente,
+        nome,
+        contato,
+        endereco,
+        descricao,
+        observacoes 
+      };
+
+      await onUpdate(clienteAtualizado);
+      
+      notifySuccess(`Cliente ${nome} atualizado com sucesso!`);
+      onClose();
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      notifyError("Erro ao atualizar cliente. Tente novamente.");
+    }
   };
 
   return (
