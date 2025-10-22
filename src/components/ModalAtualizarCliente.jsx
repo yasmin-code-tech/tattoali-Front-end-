@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 import { atualizarCliente } from "../services/clienteService";
 
-const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
+const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
   const [nome, setNome] = useState('');
   const [contato, setContato] = useState('');
   const [endereco, setEndereco] = useState('');
-  const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +14,6 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
       setNome(cliente.nome || '');
       setContato(cliente.contato || cliente.telefone || '');
       setEndereco(cliente.endereco || '');
-      setDescricao(cliente.descricao || '');
       setObservacoes(cliente.observacoes || cliente.descricao || '');
     }
   }, [cliente, isOpen]);
@@ -26,7 +24,6 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
     try {
       setLoading(true);
 
-      // Validação dos campos obrigatórios
       if (!nome.trim()) {
         notifyWarn("O nome do cliente é obrigatório!");
         setLoading(false);
@@ -44,18 +41,16 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
         nome,
         contato,
         endereco,
-        descricao,
-        observacoes 
+        observacoes,
+        descricao: observacoes 
       };
 
-      // Atualizar no backend
       await atualizarCliente(clienteAtualizado);
       
       notifySuccess(`Cliente ${nome} atualizado com sucesso!`);
       
-      // Se onUpdate foi passado, chamar também (para atualizar a lista no componente pai)
-      if (onUpdate && typeof onUpdate === 'function') {
-        onUpdate(clienteAtualizado);
+      if (onSuccess && typeof onSuccess === 'function') {
+        onSuccess(clienteAtualizado);
       }
       
       onClose();
@@ -125,24 +120,12 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onUpdate, cliente }) => {
           </div>
 
           <div>
-            <label className="block text-gray-400 mb-1">Descrição</label>
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva o serviço ou observação principal"
-              rows="3"
-              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
             <label className="block text-gray-400 mb-1">Observações</label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               placeholder="Adicione observações adicionais"
-              rows="3"
+              rows="4"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
               disabled={loading}
             />

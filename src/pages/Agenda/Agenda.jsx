@@ -331,7 +331,7 @@ export default function Agenda() {
               <button onClick={() => handleFiltroChange('realizadas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'realizadas' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
                 Sessões Realizadas
               </button>
-              <button onClick={() => handleFiltroChange('canceladas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'canceladas' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
+              <button onClick={() => handleFiltroChange('canceladas')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ filtroVisualizacao === 'canceladas' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600' }`}>
                 Sessões Canceladas
               </button>
             </div>
