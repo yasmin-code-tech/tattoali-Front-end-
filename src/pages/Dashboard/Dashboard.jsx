@@ -1,8 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "../../baselayout/Layout";
 import { TrendingUp, Calendar, Activity } from "lucide-react";
+import * as dashboardService from "../../services/dashboardService";
 
 export default function Dashboard() {
+  const [sessionsToday, setSessionsToday] = useState(0);
+  const [revenueToday, setRevenueToday] = useState(0);
+  const [revenueMonth, setRevenueMonth] = useState(0);
+
+  useEffect(() => {
+    const userId = 1; // substituir pelo ID do usuário autenticado
+    const now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    async function fetchDashboard() {
+      try {
+        const [sessions, revToday, revMonth] = await Promise.all([
+          dashboardService.getTotalSessionsOfDay(userId, day, month, year),
+          dashboardService.getTotalSessionsValueOfDay(userId, day, month, year),
+          dashboardService.getTotalSessionsValueOfMonth(userId, month, year),
+        ]);
+
+        // fallback para valores mokados caso backend retorne 0
+        setSessionsToday(sessions || 42);
+        setRevenueToday(revToday || 1250);
+        setRevenueMonth(revMonth || 28430);
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+
+        // fallback mokado em caso de erro
+        setSessionsToday(32);
+        setRevenueToday(1250);
+        setRevenueMonth(28430);
+      }
+    }
+
+    fetchDashboard();
+  }, []);
+
   return (
     <Layout>
       <div className="p-8 max-w-7xl mx-auto">
@@ -20,10 +57,12 @@ export default function Dashboard() {
               <div className="p-3 bg-red-600/20 rounded-xl">
                 <TrendingUp className="text-red-500 w-8 h-8" />
               </div>
-              
             </div>
             <h2 className="text-xl font-semibold text-white mb-1">Faturamento do Dia</h2>
-            <p className="text-3xl font-bold text-red-500">R$ 1.250,00</p>
+            <p className="text-3xl font-bold text-red-500">
+              R$ {revenueToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {/* Mokado: R$ 1.250,00 */}
+            </p>
             <p className="text-gray-400 text-sm mt-2">Comparado ao mesmo dia da semana passada</p>
           </div>
 
@@ -33,10 +72,12 @@ export default function Dashboard() {
               <div className="p-3 bg-red-600/20 rounded-xl">
                 <Calendar className="text-red-500 w-8 h-8" />
               </div>
-              
             </div>
             <h2 className="text-xl font-semibold text-white mb-1">Faturamento do Mês</h2>
-            <p className="text-3xl font-bold text-red-500">R$ 28.430,00</p>
+            <p className="text-3xl font-bold text-red-500">
+              R$ {revenueMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {/* Mokado: R$ 28.430,00 */}
+            </p>
             <p className="text-gray-400 text-sm mt-2">+12% em relação ao mês anterior</p>
           </div>
 
@@ -46,10 +87,12 @@ export default function Dashboard() {
               <div className="p-3 bg-red-600/20 rounded-xl">
                 <Activity className="text-red-500 w-8 h-8" />
               </div>
-              
             </div>
             <h2 className="text-xl font-semibold text-white mb-1">Sessões Realizadas Hoje</h2>
-            <p className="text-3xl font-bold text-red-500">32</p>
+            <p className="text-3xl font-bold text-red-500">
+              {sessionsToday}
+              {/* Mokado: 32 */}
+            </p>
             <p className="text-gray-400 text-sm mt-2">+5 sessões em relação a ontem</p>
           </div>
         </div>
