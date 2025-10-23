@@ -2,6 +2,11 @@ import React from 'react';
 
 const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
   if (!isOpen || !cliente) return null;
+  
+  // Debug: verificar dados do cliente
+  console.log('=== MODAL DETALHES CLIENTE ===');
+  console.log('Cliente recebido:', cliente);
+  console.log('Sessões canceladas:', cliente.sessoesCanceladas);
 
   // Função para obter as iniciais do cliente
   const getInitials = (nome) => {

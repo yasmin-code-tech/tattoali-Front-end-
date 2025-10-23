@@ -5,6 +5,7 @@ import {
     cancelarSessao, 
     buscarSessoesPendentesCliente, 
     buscarSessoesRealizadasCliente, 
+    buscarSessoesCanceladasCliente,
     adicionarSessao, 
     buscarSessoesPendentesPorData, 
     buscarSessoesRealizadasPorData, 
@@ -109,9 +110,10 @@ export default function Agenda() {
         return;
     }
     try {
-      const [sessoesPendentes, sessoesRealizadas] = await Promise.all([
+      const [sessoesPendentes, sessoesRealizadas, sessoesCanceladas] = await Promise.all([
         buscarSessoesPendentesCliente(sessao.cliente_id),
-        buscarSessoesRealizadasCliente(sessao.cliente_id)
+        buscarSessoesRealizadasCliente(sessao.cliente_id),
+        buscarSessoesCanceladasCliente(sessao.cliente_id)
       ]);
       const cliente = {
         id: sessao.cliente_id,
@@ -120,7 +122,8 @@ export default function Agenda() {
         endereco: sessao.cliente?.endereco || 'Endereço não informado',
         observacoes: sessao.cliente?.observacoes || sessao.cliente?.descricao || 'Observações não informadas',
         sessoes: sessoesRealizadas.map(s => ({ data: s.data_atendimento, numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' })),
-        proximasSessoes: sessoesPendentes.map(s => ({ data: s.data_atendimento, horario: new Date(s.data_atendimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' }))
+        proximasSessoes: sessoesPendentes.map(s => ({ data: s.data_atendimento, horario: new Date(s.data_atendimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' })),
+        sessoesCanceladas: sessoesCanceladas.map(s => ({ data: s.data_atendimento, numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0', motivo: s.motivo || '' }))
       };
       setClienteSelecionado(cliente); 
       setModalDetalhesCliente(true); 
@@ -461,7 +464,7 @@ export default function Agenda() {
                       <>
                         <button
                           onClick={() => abrirModalConfirmarRealizada(sessao)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold text-xs w-full sm:w-auto"
+                          className="bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium text-xs w-full sm:w-auto"
                         >
                           Marcar como Realizada
                         </button>

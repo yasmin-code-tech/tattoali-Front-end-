@@ -101,11 +101,18 @@ export default function Clientes() {
 
   const handleAbrirModalDetalhes = async (cliente) => {
     try {
+      console.log('=== ABRINDO MODAL DETALHES CLIENTE ===');
+      console.log('Cliente ID:', cliente.id);
+      
       const [sessoesRealizadas, sessoesPendentes, sessoesCanceladas] = await Promise.all([
         buscarSessoesRealizadasCliente(cliente.id),
         buscarSessoesPendentesCliente(cliente.id),
         buscarSessoesCanceladasCliente(cliente.id)
       ]);
+      
+      console.log('Sessões realizadas:', sessoesRealizadas);
+      console.log('Sessões pendentes:', sessoesPendentes);
+      console.log('Sessões canceladas:', sessoesCanceladas);
 
       const clienteParaModal = {
         ...cliente,
