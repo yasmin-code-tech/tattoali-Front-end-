@@ -6,11 +6,11 @@ import {
     buscarSessoesPendentesCliente, 
     buscarSessoesRealizadasCliente, 
     buscarSessoesCanceladasCliente,
+    buscarSessoesPorNome,
     adicionarSessao, 
     buscarSessoesPendentesPorData, 
     buscarSessoesRealizadasPorData, 
     buscarSessoesCanceladasPorData 
-    // Lembre-se de importar a função de busca por nome, ex: buscarSessoesPorNome
 } from '../../services/agendaService';
 import { criarCliente } from '../../services/clienteService';
 import ModalMarcarSessao from "../../components/ModalMarcarSessao";
@@ -41,8 +41,8 @@ export default function Agenda() {
 
   // ✅ NOVOS ESTADOS ADICIONADOS
   const [ordemHorario, setOrdemHorario] = useState('asc'); // 'asc' ou 'desc'
-  const [filtroBusca, setFiltroBusca] = useState('data'); // 'data' ou 'nome'
   const [valorBusca, setValorBusca] = useState(''); // valor da busca por nome
+  const [sessoes, setSessoes] = useState([]); // sessões para busca por nome
 
   const chaveData = useMemo(() => {
     // ... (lógica original do useMemo)
@@ -83,17 +83,29 @@ export default function Agenda() {
     }
   };
 
-  // ✅ FUNÇÃO ATUALIZADA PARA ORDENAR
+  // ✅ FUNÇÃO ATUALIZADA PARA CAMPOS SEPARADOS
   const getSessoesAtuais = () => {
-    const sessoes = Array.isArray(todasSessoesDoDia) ? [...todasSessoesDoDia] : [];
+    // Se há valor no campo de nome, usar o estado 'sessoes' (busca por nome)
+    if (valorBusca.trim()) {
+      const sessoesFiltradas = Array.isArray(sessoes) ? [...sessoes] : [];
+      sessoesFiltradas.sort((a, b) => {
+        const horaA = a?.data_atendimento ? new Date(a.data_atendimento).getTime() : Infinity;
+        const horaB = b?.data_atendimento ? new Date(b.data_atendimento).getTime() : Infinity;
+        return ordemHorario === 'asc' ? horaA - horaB : horaB - horaA;
+      });
+      return sessoesFiltradas;
+    }
+    
+    // Se não há valor no campo de nome, usar o estado 'todasSessoesDoDia' (busca por data)
+    const sessoesDoDia = Array.isArray(todasSessoesDoDia) ? [...todasSessoesDoDia] : [];
   
-    sessoes.sort((a, b) => {
+    sessoesDoDia.sort((a, b) => {
       const horaA = a?.data_atendimento ? new Date(a.data_atendimento).getTime() : Infinity;
       const horaB = b?.data_atendimento ? new Date(b.data_atendimento).getTime() : Infinity;
       return ordemHorario === 'asc' ? horaA - horaB : horaB - horaA;
     });
   
-    return sessoes;
+    return sessoesDoDia;
   };
 
   const handleFiltroChange = (novoFiltro) => {
@@ -223,26 +235,92 @@ export default function Agenda() {
     }
   };
 
-  // ✅ FUNÇÃO ATUALIZADA para lidar com busca por data ou nome
-  const handleBuscarAgenda = () => {
-    if(filtroBusca === 'data'){
+  // ✅ FUNÇÃO ATUALIZADA para campos separados
+  const handleBuscarAgenda = async () => {
+    try {
+      console.log('=== HANDLE BUSCAR AGENDA ===');
+      console.log('Chave data:', chaveData);
+      console.log('Valor busca:', valorBusca);
+      
+      // Se há valor no campo de nome, buscar por nome
+      if (valorBusca.trim()) {
+        console.log('Buscando por nome...');
+        
+        console.log('Iniciando busca por nome...');
+        setLoading(true);
+        
+        const sessoesEncontradas = await buscarSessoesPorNome(valorBusca.trim());
+        console.log('Sessões encontradas:', sessoesEncontradas);
+        
+        // Filtrar sessões por status baseado no filtroVisualizacao
+        let sessoesFiltradas = sessoesEncontradas || [];
+        console.log('Filtro visualização:', filtroVisualizacao);
+        
+        if (filtroVisualizacao === 'pendentes') {
+          sessoesFiltradas = sessoesEncontradas.filter(sessao => !sessao.realizado && !sessao.cancelado);
+        } else if (filtroVisualizacao === 'realizadas') {
+          sessoesFiltradas = sessoesEncontradas.filter(sessao => sessao.realizado && !sessao.cancelado);
+        } else if (filtroVisualizacao === 'canceladas') {
+          sessoesFiltradas = sessoesEncontradas.filter(sessao => sessao.cancelado);
+        }
+        
+        console.log('Sessões filtradas:', sessoesFiltradas);
+        setSessoes(sessoesFiltradas);
+        notifySuccess(`${sessoesFiltradas.length} sessão(ões) encontrada(s) para "${valorBusca}"`);
+        return;
+      }
+      
+      // Se não há valor no campo de nome, buscar por data
+      console.log('Buscando por data:', chaveData);
       carregarAgendaDoDia(chaveData);
-    } else {
-      // Buscar por nome usando valorBusca
-      console.log("Busca por nome:", valorBusca);
-      // Aqui você precisará chamar a função do serviço que filtra sessões por nome
-      // Por exemplo: buscarSessoesPorNome(valorBusca)
-      notifyWarn("A busca por nome ainda não foi implementada.");
+      
+    } catch (error) {
+      console.error('=== ERRO GERAL NA BUSCA ===');
+      console.error('Erro:', error);
+      notifyError('Erro ao buscar. Tente novamente.');
+      setSessoes([]);
+    } finally {
+      console.log('Finalizando loading...');
+      setLoading(false);
     }
   };
 
-  // ✅ useEffect ATUALIZADO para nova lógica de busca
+  // ✅ useEffect ATUALIZADO para campos separados
   useEffect(() => {
-    if (filtroBusca === 'data') {
-      carregarAgendaDoDia(chaveData);
+    console.log('=== USEEFFECT BUSCA ===');
+    console.log('Chave data:', chaveData);
+    console.log('Valor busca:', valorBusca);
+    
+    // Se há valor no campo de nome, não fazer busca automática por data
+    if (valorBusca.trim()) {
+      console.log('Há valor no campo nome, não buscando por data automaticamente');
+      return;
     }
-    // Se o filtro for 'nome', a busca é acionada apenas pelo botão 'handleBuscarAgenda'
-  }, [chaveData, filtroVisualizacao, filtroBusca]); // Adiciona filtroBusca
+    
+    // Se não há valor no campo de nome, buscar por data
+    console.log('Carregando agenda do dia...');
+    carregarAgendaDoDia(chaveData);
+  }, [chaveData, filtroVisualizacao]); // Removido filtroBusca e valorBusca
+
+  // useEffect separado para busca por nome (com debounce)
+  useEffect(() => {
+    if (valorBusca.trim()) {
+      console.log('=== USEEFFECT BUSCA POR NOME ===');
+      console.log('Valor busca:', valorBusca);
+      
+      // Debounce: aguarda 500ms antes de fazer a busca
+      const timeoutId = setTimeout(() => {
+        console.log('Executando busca por nome após debounce...');
+        handleBuscarAgenda();
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Se campo de nome estiver vazio, limpar sessões de busca por nome
+      console.log('Campo nome vazio, limpando sessões de busca por nome...');
+      setSessoes([]);
+    }
+  }, [valorBusca]); // Só executa quando valorBusca muda
 
   return (
     <div id="agenda-screen" className="min-h-screen p-6">
@@ -261,39 +339,37 @@ export default function Agenda() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               
               {/* ✅ INÍCIO DO BLOCO DE BUSCA ATUALIZADO */}
-              <div className="card p-4 rounded-lg inline-flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              <div className="card p-2 rounded-lg inline-flex flex-wrap items-center gap-3 w-full lg:w-auto">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
                   <label className="text-gray-300 text-sm font-medium">Buscar por:</label>
                 </div>
-                <select
-                  value={filtroBusca}
-                  onChange={e => setFiltroBusca(e.target.value)}
-                  className="input-field bg-gray-800 border-gray-600 px-2 py-2 rounded-lg text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
-                >
-                  <option value="data">Data</option>
-                  <option value="nome">Nome</option>
-                </select>
-
-                {/* Input condicional: Data ou Nome */}
-                {filtroBusca === 'data' ? (
+                {/* Campo de busca por data */}
+                <div className="flex items-center gap-2">
+                  <label className="text-white text-sm font-medium">Data:</label>
                   <input
                     type="date"
                     value={chaveData}
                     onChange={handleDataChange}
                     className="input-field bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[140px]"
                   />
-                ) : (
+                </div>
+
+                {/* Campo de busca por nome */}
+                <div className="flex items-center gap-2">
+                  <label className="text-white text-sm font-medium">Nome:</label>
                   <input
                     type="text"
                     placeholder="Digite o nome do cliente"
                     value={valorBusca}
                     onChange={(e) => setValorBusca(e.target.value)}
-                    className="input-field bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[140px]"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleBuscarAgenda();
+                      }
+                    }}
+                    className="input-field bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[200px]"
                   />
-                )}
+                </div>
 
                 <button
                   onClick={handleBuscarAgenda}
@@ -320,10 +396,10 @@ export default function Agenda() {
 
               {/* Botões de Ação (Adicionar Cliente / Marcar Sessão) */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-                <button onClick={handleAdicionarCliente} className="btn-primary px-6 py-3 rounded-lg font-semibold text-sm inline-flex items-center justify-center w-full sm:w-auto">
+                <button onClick={handleAdicionarCliente} className="btn-primary px-6 py-3.5 rounded-lg font-semibold text-sm inline-flex items-center justify-center w-full sm:w-auto">
                   Adicionar Cliente
                 </button>
-                <button onClick={handleMarcarSessao} className="btn-secondary px-6 py-3 rounded-lg font-medium text-sm inline-flex items-center justify-center w-full sm:w-auto">
+                <button onClick={handleMarcarSessao} className="btn-secondary px-6 py-3.5 rounded-lg font-medium text-sm inline-flex items-center justify-center w-full sm:w-auto">
                   Marcar Sessão
                 </button>
               </div>

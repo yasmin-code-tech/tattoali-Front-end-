@@ -257,3 +257,68 @@ export const buscarSessoesCanceladasCliente = async (clienteId) => {
     return [];
   }
 };
+
+/**
+ * Busca sessões por nome do cliente
+ * @param {string} nomeCliente - Nome do cliente para buscar
+ * @returns {Promise<Array>} Lista de sessões do cliente
+ */
+export const buscarSessoesPorNome = async (nomeCliente) => {
+  console.log('=== BUSCANDO SESSÕES POR NOME ===');
+  console.log('Nome do cliente:', nomeCliente);
+  
+  if (!nomeCliente || !nomeCliente.trim()) {
+    console.log('Nome vazio, retornando array vazio');
+    return [];
+  }
+  
+  try {
+    // Buscar todas as sessões e filtrar por nome no frontend (mesma abordagem do clienteService)
+    console.log('Buscando todas as sessões para filtrar por nome...');
+    
+    // Buscar sessões pendentes, realizadas e canceladas
+    const [responsePendentes, responseRealizadas, responseCanceladas] = await Promise.all([
+      api.get('/api/sessions/pendentes'),
+      api.get('/api/sessions/realizadas'),
+      api.get('/api/sessions/canceladas')
+    ]);
+    
+    console.log('Response pendentes:', responsePendentes);
+    console.log('Response realizadas:', responseRealizadas);
+    console.log('Response canceladas:', responseCanceladas);
+    
+    // Extrair dados das respostas (pode vir em response.data ou diretamente)
+    const sessoesPendentes = responsePendentes?.data || responsePendentes || [];
+    const sessoesRealizadas = responseRealizadas?.data || responseRealizadas || [];
+    const sessoesCanceladas = responseCanceladas?.data || responseCanceladas || [];
+    
+    console.log('Sessões pendentes extraídas:', sessoesPendentes);
+    console.log('Sessões realizadas extraídas:', sessoesRealizadas);
+    console.log('Sessões canceladas extraídas:', sessoesCanceladas);
+    
+    // Combinar todas as sessões
+    const todasSessoes = [
+      ...(Array.isArray(sessoesPendentes) ? sessoesPendentes : []),
+      ...(Array.isArray(sessoesRealizadas) ? sessoesRealizadas : []),
+      ...(Array.isArray(sessoesCanceladas) ? sessoesCanceladas : [])
+    ];
+    
+    console.log('Total de sessões encontradas:', todasSessoes.length);
+    
+    // Filtrar por nome do cliente (busca parcial, case-insensitive) - igual ao clienteService
+    const nomeBusca = nomeCliente.toLowerCase().trim();
+    const sessoesFiltradas = todasSessoes.filter(sessao => {
+      const nomeClienteSessao = sessao.cliente?.nome?.toLowerCase() || '';
+      return nomeClienteSessao.includes(nomeBusca);
+    });
+    
+    console.log('Sessões filtradas por nome:', sessoesFiltradas.length);
+    return sessoesFiltradas;
+    
+  } catch (error) {
+    console.error('=== ERRO AO BUSCAR SESSÕES POR NOME ===');
+    console.error('Erro:', error);
+    console.error('Mensagem:', error?.message);
+    return [];
+  }
+};
