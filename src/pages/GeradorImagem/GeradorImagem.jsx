@@ -87,7 +87,7 @@ export default function GeradorImagemChat() {
           background: #b91c1c;
         }
       `}</style>
-      <div className="p-6 max-w-4xl mx-auto flex flex-col h-[90vh] bg-gray-900/50 rounded-2xl border border-gray-700">
+      <div className="p-6 max-w-4xl mx-auto flex flex-col h-[90vh] bg-[#111111] rounded-2xl border border-gray-700">
         <h1 className="text-3xl font-bold text-white mb-6">Gerador de Imagem por IA</h1>
 
         
