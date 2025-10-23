@@ -110,7 +110,7 @@ export default function Clientes() {
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
-        observacoes: cliente.descricao,
+        observacoes: cliente.observacoes || cliente.descricao || 'Sem observações',
         sessoes: sessoesRealizadas.map(sessao => ({
           data: sessao.data_atendimento,
           numeroSessao: sessao.numero_sessao,
@@ -140,7 +140,7 @@ export default function Clientes() {
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
-        observacoes: cliente.descricao,
+        observacoes: cliente.observacoes || cliente.descricao || 'Sem observações',
         sessoes: [],
         proximasSessoes: [],
         sessoesCanceladas: []
