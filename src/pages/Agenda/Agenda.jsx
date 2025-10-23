@@ -114,7 +114,7 @@ export default function Agenda() {
         nome: sessao.cliente?.nome || 'Cliente não encontrado',
         contato: sessao.cliente?.telefone || 'Contato não informado',
         endereco: sessao.cliente?.endereco || 'Endereço não informado',
-        observacoes: sessao.cliente?.observacoes || 'Observações não informadas',
+        observacoes: sessao.cliente?.observacoes || sessao.cliente?.descricao || 'Observações não informadas',
         sessoes: sessoesRealizadas.map(s => ({ data: s.data_atendimento, numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' })),
         proximasSessoes: sessoesPendentes.map(s => ({ data: s.data_atendimento, horario: new Date(s.data_atendimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' }))
       };
