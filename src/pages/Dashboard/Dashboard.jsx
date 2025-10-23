@@ -4,12 +4,19 @@ import { TrendingUp, Calendar, Activity } from "lucide-react";
 import * as dashboardService from "../../services/dashboardService";
 
 export default function Dashboard() {
-  const [sessionsToday, setSessionsToday] = useState(0);
-  const [revenueToday, setRevenueToday] = useState(0);
+  const [sessionsDay, setSessionsDay] = useState(0);
+  const [sessionsMonth, setSessionsMonth] = useState(0);
+  const [sessionsYear, setSessionsYear] = useState(0);
+
+  const [revenueDay, setRevenueDay] = useState(0);
   const [revenueMonth, setRevenueMonth] = useState(0);
+  const [revenueYear, setRevenueYear] = useState(0);
+
+  const [sessionsDayChange, setSessionsDayChange] = useState(0);
+  const [revenueDayChange, setRevenueDayChange] = useState(0);
 
   useEffect(() => {
-    const userId = 1; // substituir pelo ID do usuário autenticado
+    const userId = 1; // substituir depois pelo ID do usuário autenticado
     const now = new Date();
     const day = now.getDate();
     const month = now.getMonth() + 1;
@@ -17,84 +24,120 @@ export default function Dashboard() {
 
     async function fetchDashboard() {
       try {
-        const [sessions, revToday, revMonth] = await Promise.all([
-          dashboardService.getTotalSessionsOfDay(userId, day, month, year),
-          dashboardService.getTotalSessionsValueOfDay(userId, day, month, year),
-          dashboardService.getTotalSessionsValueOfMonth(userId, month, year),
+        // Datas anteriores para comparação
+        const prevDate = new Date(year, month - 1, day - 7);
+        const prevDay = prevDate.getDate();
+        const prevMonth = prevDate.getMonth() + 1;
+        const prevYear = prevDate.getFullYear();
+
+        // Busca valores atuais e anteriores
+        const [
+          sessionsTodayRes,
+          revenueTodayRes,
+          sessionsMonthRes,
+          revenueMonthRes,
+          sessionsYearRes,
+          revenueYearRes,
+          sessionsPrevDay,
+          revenuePrevDay,
+        ] = await Promise.all([
+          dashboardService.getSessionsOfDay(userId, day, month, year),
+          dashboardService.getSessionsValueOfDay(userId, day, month, year),
+          dashboardService.getSessionsOfMonth(userId, month, year),
+          dashboardService.getSessionsValueOfMonth(userId, month, year),
+          dashboardService.getSessionsOfYear(userId, year),
+          dashboardService.getSessionsValueOfYear(userId, year),
+          dashboardService.getSessionsOfDay(userId, prevDay, prevMonth, prevYear),
+          dashboardService.getSessionsValueOfDay(userId, prevDay, prevMonth, prevYear),
         ]);
 
-        // fallback para valores mokados caso backend retorne 0
-        setSessionsToday(sessions || 42);
-        setRevenueToday(revToday || 1250);
-        setRevenueMonth(revMonth || 28430);
+        setSessionsDay(sessionsTodayRes || 0);
+        setRevenueDay(revenueTodayRes || 0);
+        setSessionsMonth(sessionsMonthRes || 0);
+        setRevenueMonth(revenueMonthRes || 0);
+        setSessionsYear(sessionsYearRes || 0);
+        setRevenueYear(revenueYearRes || 0);
+
+        // Calcula comparações percentuais reais
+        setSessionsDayChange(
+          sessionsPrevDay ? Math.round(((sessionsTodayRes - sessionsPrevDay) / sessionsPrevDay) * 100) : 0
+        );
+        setRevenueDayChange(
+          revenuePrevDay ? Math.round(((revenueTodayRes - revenuePrevDay) / revenuePrevDay) * 100) : 0
+        );
       } catch (error) {
         console.error("Erro ao carregar dados do dashboard:", error);
-
-        // fallback mokado em caso de erro
-        setSessionsToday(32);
-        setRevenueToday(1250);
-        setRevenueMonth(28430);
       }
     }
 
     fetchDashboard();
   }, []);
 
+  const cards = [
+    {
+      title: "Faturamento do Dia",
+      value: `R$ ${revenueDay.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      icon: <TrendingUp className="text-red-500 w-8 h-8" />,
+      subtitle: revenueDayChange >= 0
+        ? `+${revenueDayChange}% em relação ao mesmo dia da semana passada`
+        : `${revenueDayChange}% em relação ao mesmo dia da semana passada`,
+    },
+    {
+      title: "Faturamento do Mês",
+      value: `R$ ${revenueMonth.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      icon: <Calendar className="text-red-500 w-8 h-8" />,
+      subtitle: "", // Pode implementar comparação com mês anterior se quiser
+    },
+    {
+      title: "Faturamento do Ano",
+      value: `R$ ${revenueYear.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      icon: <Calendar className="text-red-500 w-8 h-8" />,
+      subtitle: "", // Pode implementar comparação com ano passado se quiser
+    },
+    {
+      title: "Sessões Hoje",
+      value: sessionsDay,
+      icon: <Activity className="text-red-500 w-8 h-8" />,
+      subtitle: sessionsDayChange >= 0
+        ? `+${sessionsDayChange}% em relação ao mesmo dia da semana passada`
+        : `${sessionsDayChange}% em relação ao mesmo dia da semana passada`,
+    },
+    {
+      title: "Sessões no Mês",
+      value: sessionsMonth,
+      icon: <Activity className="text-red-500 w-8 h-8" />,
+      subtitle: "", // Pode implementar comparação com mês anterior se quiser
+    },
+    {
+      title: "Sessões no Ano",
+      value: sessionsYear,
+      icon: <Activity className="text-red-500 w-8 h-8" />,
+      subtitle: "", // Pode implementar comparação com ano passado se quiser
+    },
+  ];
+
   return (
     <Layout>
       <div className="p-8 max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
           <p className="text-gray-400">Visão geral dos principais indicadores</p>
         </div>
 
-        {/* Cards principais */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card - Faturamento do Dia */}
-          <div className="bg-[#111111] border border-gray-800 hover:border-red-600 transition rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-600/20 rounded-xl">
-                <TrendingUp className="text-red-500 w-8 h-8" />
+          {cards.map((card, index) => (
+            <div
+              key={index}
+              className="bg-[#111111] border border-gray-800 hover:border-red-600 transition rounded-2xl p-6 flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-600/20 rounded-xl">{card.icon}</div>
               </div>
+              <h2 className="text-xl font-semibold text-white mb-1">{card.title}</h2>
+              <p className="text-3xl font-bold text-red-500">{card.value}</p>
+              <p className="text-gray-400 text-sm mt-2">{card.subtitle}</p>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-1">Faturamento do Dia</h2>
-            <p className="text-3xl font-bold text-red-500">
-              R$ {revenueToday.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              {/* Mokado: R$ 1.250,00 */}
-            </p>
-            <p className="text-gray-400 text-sm mt-2">Comparado ao mesmo dia da semana passada</p>
-          </div>
-
-          {/* Card - Faturamento do Mês */}
-          <div className="bg-[#111111] border border-gray-800 hover:border-red-600 transition rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-600/20 rounded-xl">
-                <Calendar className="text-red-500 w-8 h-8" />
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-1">Faturamento do Mês</h2>
-            <p className="text-3xl font-bold text-red-500">
-              R$ {revenueMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              {/* Mokado: R$ 28.430,00 */}
-            </p>
-            <p className="text-gray-400 text-sm mt-2">+12% em relação ao mês anterior</p>
-          </div>
-
-          {/* Card - Sessões Realizadas Hoje */}
-          <div className="bg-[#111111] border border-gray-800 hover:border-red-600 transition rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-600/20 rounded-xl">
-                <Activity className="text-red-500 w-8 h-8" />
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-1">Sessões Realizadas Hoje</h2>
-            <p className="text-3xl font-bold text-red-500">
-              {sessionsToday}
-              {/* Mokado: 32 */}
-            </p>
-            <p className="text-gray-400 text-sm mt-2">+5 sessões em relação a ontem</p>
-          </div>
+          ))}
         </div>
       </div>
     </Layout>
