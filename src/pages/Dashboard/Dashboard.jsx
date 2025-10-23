@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import Layout from "../../baselayout/Layout";
 import { TrendingUp, Calendar, Activity } from "lucide-react";
 import * as dashboardService from "../../services/dashboardService";
+import { useAuth } from "../../auth/useAuth";
 
 export default function Dashboard() {
+  const { token, isBooting } = useAuth();
   const [sessionsDay, setSessionsDay] = useState(0);
   const [sessionsMonth, setSessionsMonth] = useState(0);
   const [sessionsYear, setSessionsYear] = useState(0);
@@ -16,7 +18,16 @@ export default function Dashboard() {
   const [revenueDayChange, setRevenueDayChange] = useState(0);
 
   useEffect(() => {
-    const userId = 1; // substituir depois pelo ID do usuário autenticado
+    // Aguarda o carregamento da autenticação
+    if (isBooting) {
+      return;
+    }
+    
+    if (!token) {
+      console.warn("Usuário não autenticado, não é possível carregar dados do dashboard");
+      return;
+    }
+
     const now = new Date();
     const day = now.getDate();
     const month = now.getMonth() + 1;
@@ -41,14 +52,14 @@ export default function Dashboard() {
           sessionsPrevDay,
           revenuePrevDay,
         ] = await Promise.all([
-          dashboardService.getSessionsOfDay(userId, day, month, year),
-          dashboardService.getSessionsValueOfDay(userId, day, month, year),
-          dashboardService.getSessionsOfMonth(userId, month, year),
-          dashboardService.getSessionsValueOfMonth(userId, month, year),
-          dashboardService.getSessionsOfYear(userId, year),
-          dashboardService.getSessionsValueOfYear(userId, year),
-          dashboardService.getSessionsOfDay(userId, prevDay, prevMonth, prevYear),
-          dashboardService.getSessionsValueOfDay(userId, prevDay, prevMonth, prevYear),
+          dashboardService.getSessionsOfDay(day, month, year),
+          dashboardService.getSessionsValueOfDay(day, month, year),
+          dashboardService.getSessionsOfMonth(month, year),
+          dashboardService.getSessionsValueOfMonth(month, year),
+          dashboardService.getSessionsOfYear(year),
+          dashboardService.getSessionsValueOfYear(year),
+          dashboardService.getSessionsOfDay(prevDay, prevMonth, prevYear),
+          dashboardService.getSessionsValueOfDay(prevDay, prevMonth, prevYear),
         ]);
 
         setSessionsDay(sessionsTodayRes || 0);
@@ -71,7 +82,7 @@ export default function Dashboard() {
     }
 
     fetchDashboard();
-  }, []);
+  }, [token, isBooting]);
 
   const cards = [
     {
