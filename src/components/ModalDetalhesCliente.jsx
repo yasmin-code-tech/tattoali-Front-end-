@@ -2,6 +2,11 @@ import React from 'react';
 
 const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
   if (!isOpen || !cliente) return null;
+  
+  // Debug: verificar dados do cliente
+  console.log('=== MODAL DETALHES CLIENTE ===');
+  console.log('Cliente recebido:', cliente);
+  console.log('Sessões canceladas:', cliente.sessoesCanceladas);
 
   // Função para obter as iniciais do cliente
   const getInitials = (nome) => {
@@ -126,14 +131,12 @@ const ModalDetalhesCliente = ({ isOpen, onClose, cliente, onEditClient }) => {
                 </div>
               )}
 
-              {cliente.observacoes && (
-                <div>
-                  <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
-                    Observações
-                  </h3>
-                  <p className="text-white">{cliente.observacoes}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-2">
+                  Observações
+                </h3>
+                <p className="text-white">{cliente.observacoes || 'Sem observações'}</p>
+              </div>
             </div>
           </div>
 

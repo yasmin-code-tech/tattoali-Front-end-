@@ -71,11 +71,29 @@ export default function GeradorImagemChat() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-4xl mx-auto flex flex-col h-[90vh]">
+      <style jsx>{`
+        .scrollbar-red::-webkit-scrollbar {
+          width: 8px;
+        }
+        .scrollbar-red::-webkit-scrollbar-track {
+          background: #1f1f1f;
+          border-radius: 4px;
+        }
+        .scrollbar-red::-webkit-scrollbar-thumb {
+          background: #dc2626;
+          border-radius: 4px;
+        }
+        .scrollbar-red::-webkit-scrollbar-thumb:hover {
+          background: #b91c1c;
+        }
+      `}</style>
+      <div className="p-6 max-w-4xl mx-auto flex flex-col h-[90vh] bg-[#111111] rounded-2xl border border-gray-700">
         <h1 className="text-3xl font-bold text-white mb-6">Gerador de Imagem por IA</h1>
 
+        
+
         {/* Área de chat */}
-        <div className="flex-1 overflow-y-auto mb-4 flex flex-col gap-4 px-2">
+        <div className="flex-1 overflow-y-auto mb-4 flex flex-col gap-4 px-2 ">
           {messages.map((msg, index) => (
             <div
               key={index}

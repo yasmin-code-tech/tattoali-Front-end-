@@ -6,7 +6,7 @@ import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
 import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
-import { buscarClientes } from '../../services/clienteService';
+import { buscarClientes, criarCliente } from '../../services/clienteService';
 
 const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
@@ -101,16 +101,23 @@ export default function Clientes() {
 
   const handleAbrirModalDetalhes = async (cliente) => {
     try {
+      console.log('=== ABRINDO MODAL DETALHES CLIENTE ===');
+      console.log('Cliente ID:', cliente.id);
+      
       const [sessoesRealizadas, sessoesPendentes, sessoesCanceladas] = await Promise.all([
         buscarSessoesRealizadasCliente(cliente.id),
         buscarSessoesPendentesCliente(cliente.id),
         buscarSessoesCanceladasCliente(cliente.id)
       ]);
+      
+      console.log('Sessões realizadas:', sessoesRealizadas);
+      console.log('Sessões pendentes:', sessoesPendentes);
+      console.log('Sessões canceladas:', sessoesCanceladas);
 
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
-        observacoes: cliente.descricao,
+        observacoes: cliente.observacoes || cliente.descricao || 'Sem observações',
         sessoes: sessoesRealizadas.map(sessao => ({
           data: sessao.data_atendimento,
           numeroSessao: sessao.numero_sessao,
@@ -140,7 +147,7 @@ export default function Clientes() {
       const clienteParaModal = {
         ...cliente,
         endereco: cliente.endereco || 'Endereço não informado',
-        observacoes: cliente.descricao,
+        observacoes: cliente.observacoes || cliente.descricao || 'Sem observações',
         sessoes: [],
         proximasSessoes: [],
         sessoesCanceladas: []
@@ -184,29 +191,33 @@ export default function Clientes() {
                 {loading ? "Buscando..." : "Buscar"}
               </button>
             </div>
-
-            {/* Botão para alternar ordem */}
-            <button
-              onClick={toggleOrdem}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-              title="Alternar ordem"
-            >
-              Ordem {ordemCrescente ? 'A-Z' : 'Z-A'}
-              {ordemCrescente ? <FiArrowDown /> : <FiArrowUp />}
-            </button>
-
+            
             {/* Botão adicionar cliente */}
             <button
               onClick={handleAbrirModalCadastrar}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              className="bg-red-600 hover:bg-red-700 text-white  rounded-lg flex items-center justify-center gap-2 transition"
+              style={{ paddingTop: '19.0px', paddingBottom: '19.0px', paddingLeft: '19.0px', paddingRight: '19.0px' }}
               title="Adicionar Cliente"
             >
               <FiUser className="w-5 h-5" />
               <FiPlus className="w-4 h-4" />
             </button>
           </div>
+
         </div>
 
+         {/* Botão para alternar ordem */}
+         <div className="mb-6">
+               <button
+               onClick={toggleOrdem}
+               className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+               title="Alternar ordem"
+             >
+               Ordem {ordemCrescente ? 'A-Z' : 'Z-A'}
+               {ordemCrescente ? <FiArrowDown /> : <FiArrowUp />}
+             </button>
+         </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClientes.map(cliente => (
             <ClienteCard
@@ -245,15 +256,24 @@ export default function Clientes() {
       <ModalCadastrarCliente
         isOpen={modalCadastrarOpen}
         onClose={() => setModalCadastrarOpen(false)}
-        onSave={(novoCliente) => {
-          const clienteComId = {
-            ...novoCliente,
-            id: Date.now(),
-            contato: novoCliente.contato,
-            descricao: novoCliente.observacoes || 'Sem descrição'
-          };
-          setClientes(prev => [...prev, clienteComId]);
-          setModalCadastrarOpen(false);
+        onSave={async (novoCliente) => {
+          try {
+            const clienteCriado = await criarCliente(novoCliente);
+            
+            // Mapear resposta do backend para formato do frontend
+            const clienteMapeado = {
+              ...clienteCriado,
+              id: clienteCriado.client_id,
+              contato: clienteCriado.telefone,
+              observacoes: clienteCriado.descricao
+            };
+            
+            setClientes(prev => [...prev, clienteMapeado]);
+            setModalCadastrarOpen(false);
+          } catch (error) {
+            console.error('Erro ao criar cliente:', error);
+            alert('Erro ao criar cliente. Tente novamente.');
+          }
         }}
       />
     </Layout>
