@@ -21,7 +21,11 @@ import { notifySuccess, notifyWarn, notifyError } from "../../services/notificat
 
 export default function Agenda() {
 
-  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+  const [dataSelecionada, setDataSelecionada] = useState(() => {
+    // Inicializar com data local atual sem problemas de fuso horário
+    const hoje = new Date();
+    return new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  });
   const [todasSessoesDoDia, setTodasSessoesDoDia] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState(null); 
@@ -207,7 +211,9 @@ export default function Agenda() {
   const handleDataChange = (e) => {
     const valor = e.target.value; 
     if (valor) {
-      const nova = new Date(valor + 'T00:00:00'); 
+      // Criar data local sem problemas de fuso horário
+      const [ano, mes, dia] = valor.split('-').map(Number);
+      const nova = new Date(ano, mes - 1, dia);
       if (!isNaN(nova.getTime())) {
         setDataSelecionada(nova);
       }
