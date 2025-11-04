@@ -7,6 +7,7 @@ import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
+import AlterarSenha from "./pages/AlterarSenha/AlterarSenha";
 import Agenda from "./pages/Agenda/Agenda";
 import Perfil from "./pages/Perfil/Perfil";
 import Clientes from "./pages/Clientes/Clientes";
@@ -36,6 +37,14 @@ export default function App() {
             element={
               <PublicOnlyRoute>
                 <Cadastro />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/alterar-senha"
+            element={
+              <PublicOnlyRoute>
+                <AlterarSenha />
               </PublicOnlyRoute>
             }
           />
