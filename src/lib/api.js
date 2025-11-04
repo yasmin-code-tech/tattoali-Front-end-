@@ -204,7 +204,7 @@ async function mockApiFetch(path, options = {}) {
   }
 
   // Mock para recuperação de senha
-  if ((path === "/auth/forgot-password" || path === "/api/user/forgot-password") && method === "POST") {
+  if ((path === "/auth/forgot-password" || path === "/api/user/forgot-password" || path === "/api/user/recuperar-senha") && method === "POST") {
     const body = safeParse(options.body) || {};
     const email = body.email;
     
@@ -218,6 +218,35 @@ async function mockApiFetch(path, options = {}) {
     // Simula envio de e-mail de recuperação
     return { 
       message: "Instruções para redefinir sua senha foram enviadas para o seu e-mail.",
+      success: true 
+    };
+  }
+
+  // Mock para alterar senha (com token)
+  if ((path === "/auth/reset-password" || path === "/api/user/recuperar-password" || path === "/api/user/alterar-senha") && method === "POST") {
+    const body = safeParse(options.body) || {};
+    // Aceita tanto 'access-token' (com hífen) quanto 'token' ou 'accessToken'
+    const token = body['access-token'] || body.token || body.accessToken;
+    // Aceita tanto 'novaSenha' quanto 'senha' ou 'password'
+    const senha = body.novaSenha || body.senha || body.password;
+    
+    if (!token) {
+      const err = new Error("Token de recuperação inválido ou ausente");
+      err.status = 400;
+      err.data = { message: "Token de recuperação inválido ou ausente" };
+      throw err;
+    }
+
+    if (!senha || senha.length < 6) {
+      const err = new Error("A senha deve ter pelo menos 6 caracteres");
+      err.status = 400;
+      err.data = { message: "A senha deve ter pelo menos 6 caracteres" };
+      throw err;
+    }
+
+    // Simula reset de senha bem-sucedido
+    return { 
+      message: "Senha alterada com sucesso!",
       success: true 
     };
   }

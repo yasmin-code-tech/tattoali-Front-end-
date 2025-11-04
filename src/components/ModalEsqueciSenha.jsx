@@ -36,7 +36,7 @@ const ModalEsqueciSenha = ({ isOpen, onClose }) => {
     setMessage('');
 
     try {
-      const response = await api.post('/api/user/forgot-password', { email });
+      const response = await api.post('/api/user/recuperar-senha', { email });
       
       setIsSuccess(true);
       setMessage(response.message || 'Instruções para redefinir sua senha foram enviadas para o seu e-mail.');

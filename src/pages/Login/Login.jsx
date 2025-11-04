@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import ModalEsqueciSenha from "../../components/ModalEsqueciSenha";
 
@@ -14,7 +14,16 @@ export default function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
+
+  // Redireciona para alterar senha se houver token de reset na URL
+  useEffect(() => {
+    const accessToken = searchParams.get('access-token') || searchParams.get('access_token') || searchParams.get('accessToken') || searchParams.get('token');
+    if (accessToken) {
+      navigate(`/reset-password?access-token=${encodeURIComponent(accessToken)}`, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
 
   const handleSubmit = async (e) => {
