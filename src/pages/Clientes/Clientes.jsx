@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from "react";
 import Layout from '../../baselayout/Layout';
-import { FiUser, FiPlus, FiArrowDown, FiArrowUp } from "react-icons/fi";
+import { FiUser, FiPlus, FiArrowDown, FiArrowUp, FiTrash2 } from "react-icons/fi";
 
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
 import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
-import { buscarClientes, criarCliente } from '../../services/clienteService';
+import { buscarClientes, criarCliente, deletarCliente } from '../../services/clienteService';
 
-const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes }) => (
+const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes, onExcluir }) => (
   <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
     <div className="flex justify-between items-start mb-4">
       <h3 className="text-lg font-semibold text-white">{nome}</h3>
+      <button
+        onClick={() => onExcluir(id, nome)}
+        className="text-gray-400 hover:text-red-500 transition"
+        title="Excluir cliente"
+      >
+        <FiTrash2 className="w-5 h-5" />
+      </button>
     </div>
     <p className="text-gray-400 text-sm mb-2">{contato}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
@@ -161,6 +168,30 @@ export default function Clientes() {
     setModalCadastrarOpen(true);
   };
 
+  const handleExcluirCliente = async (id, nome) => {
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja excluir o cliente "${nome}"?\n\nEsta ação não pode ser desfeita.`
+    );
+
+    if (!confirmacao) return;
+
+    try {
+      await deletarCliente(id);
+      setClientes(prev => prev.filter(c => c.id !== id));
+      alert('Cliente excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      
+      if (error.message?.includes('sessões') || error.message?.includes('foreign key') || error.message?.includes('constraint')) {
+        alert(`Não é possível excluir o cliente "${nome}".\n\nExistem sessões vinculadas a este cliente. Exclua ou transfira as sessões antes de excluir o cliente.`);
+      } else if (error.message?.includes('não encontrado')) {
+        alert('Cliente não encontrado.');
+      } else {
+        alert(error.message || 'Erro ao excluir cliente. Tente novamente.');
+      }
+    }
+  };
+
   return (
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
@@ -225,6 +256,7 @@ export default function Clientes() {
               {...cliente}
               onAtualizar={handleAbrirModalAtualizar}
               onVerDetalhes={handleAbrirModalDetalhes}
+              onExcluir={handleExcluirCliente}
             />
           ))}
         </div>
