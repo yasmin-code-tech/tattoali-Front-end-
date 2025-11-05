@@ -114,3 +114,26 @@ export const buscarClientePorId = async (clienteId) => {
     throw new Error('Falha ao carregar dados do cliente');
   }
 };
+/**
+ * Deleta um cliente
+ * @param {number} clienteId - ID do cliente a ser deletado
+ * @returns {Promise<Object>} Confirmação da exclusão
+ */
+export const deletarCliente = async (clienteId) => {
+  try {
+    console.log('Deletando cliente:', clienteId);
+
+    const response = await api.del(`/api/client/${clienteId}`);
+    console.log('Cliente deletado com sucesso:', response);
+    return response;
+  } catch (error) {
+    console.error('Erro ao deletar cliente:', error);
+    
+    // Trata erros específicos do backend
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    
+    throw new Error('Falha ao deletar cliente');
+  }
+};
