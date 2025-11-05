@@ -76,14 +76,22 @@ export default function Home() {
     const carregarDadosDashboard = async () => {
       try {
         setLoading(true);
-        const hoje = new Date().toISOString().split('T')[0];
+
+        const hojeDateObj = new Date();
+        const ano = hojeDateObj.getFullYear();
+        const mes = String(hojeDateObj.getMonth() + 1).padStart(2, '0'); 
+        const dia = String(hojeDateObj.getDate()).padStart(2, '0');
+        const hoje = `${ano}-${mes}-${dia}`; 
+
+        console.log("Buscando dados para a data local:", hoje); 
 
         const [perfilData, sessoesData, clientesData] = await Promise.all([
           buscarPerfilTatuador(),
-          buscarSessoesPendentesPorData(hoje),
+          buscarSessoesPendentesPorData(hoje), 
           buscarClientes()
         ]);
 
+        console.log("Sessões pendentes recebidas:", sessoesData); 
 
         setNomeUsuario(user?.nome || perfilData?.nome || 'Tatuador'); 
         
