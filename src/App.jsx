@@ -7,21 +7,20 @@ import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 
 import Login from "./pages/Login/Login";
 import Cadastro from "./pages/Cadastro/Cadastro";
-import AlterarSenha from "./pages/AlterarSenha/AlterarSenha";
+import AlterarSenha from "./pages/AlterarSenha/AlterarSenha"; 
 import Agenda from "./pages/Agenda/Agenda";
 import Perfil from "./pages/Perfil/Perfil";
 import Clientes from "./pages/Clientes/Clientes";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import GeradorImagem from "./pages/GeradorImagem/GeradorImagem";
 import Galeria from "./pages/Galeria/Galeria";
+import Home from "./pages/Home"; 
 
 export default function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
-          {/* raiz manda pro login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* públicas */}
           <Route
@@ -51,19 +50,19 @@ export default function App() {
           
           {/* grupo de PRIVADAS */}
           <Route element={<ProtectedRoute />}>
+            <Route index element={<Home />}/>
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/gerador-imagem" element={<GeradorImagem />} />
             <Route path="/dashboard" element={<Dashboard />} /> 
             <Route path="/galeria" element={<Galeria />}/>
-
           </Route>
 
-          {/* fallback */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-                <ToastContainer
+        
+        <ToastContainer
           position="top-right"
           autoClose={3000} 
           hideProgressBar={false}
