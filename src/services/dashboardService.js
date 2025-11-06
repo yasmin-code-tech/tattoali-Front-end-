@@ -3,8 +3,21 @@ import { api } from "../lib/api";
 // ================== SESSÕES ==================
 export const getSessionsOfDay = async (day, month, year) => {
   try {
+    // Garante que os valores sejam números inteiros
+    const diaNum = parseInt(day, 10);
+    const mesNum = parseInt(month, 10);
+    const anoNum = parseInt(year, 10);
+    
+    // Formata o dia com zero à esquerda (ex: 6 -> "06") para passar na validação do backend
+    // O backend espera string com 2 dígitos para validateDia
+    const dia = String(diaNum).padStart(2, '0');
+    const mes = String(mesNum);
+    const ano = String(anoNum);
+    
     console.log("🔍 Dashboard Service - getSessionsOfDay chamado com:", { day, month, year });
-    const response = await api.get(`/api/dashboard/sessions/day?dia=${day}&mes=${month}&ano=${year}`);
+    console.log("🔍 Valores formatados:", { dia, mes, ano });
+    
+    const response = await api.get(`/api/dashboard/sessions/day?dia=${dia}&mes=${mes}&ano=${ano}`);
     console.log("📊 Dashboard Service - Resposta recebida:", response);
     
     // O backend retorna { realizados: number, pendentes: number }
@@ -53,7 +66,20 @@ export const getSessionsOfYear = async (year) => {
 // ================== VALORES ==================
 export const getSessionsValueOfDay = async (day, month, year) => {
   try {
-    const response = await api.get(`/api/dashboard/sessions/value/day?dia=${day}&mes=${month}&ano=${year}`);
+    // Garante que os valores sejam números inteiros
+    const diaNum = parseInt(day, 10);
+    const mesNum = parseInt(month, 10);
+    const anoNum = parseInt(year, 10);
+    
+    // Formata o dia com zero à esquerda (ex: 6 -> "06") para passar na validação do backend
+    const dia = String(diaNum).padStart(2, '0');
+    const mes = String(mesNum);
+    const ano = String(anoNum);
+    
+    console.log("💰 Dashboard Service - getSessionsValueOfDay chamado com:", { day, month, year });
+    console.log("💰 Valores formatados:", { dia, mes, ano });
+    
+    const response = await api.get(`/api/dashboard/sessions/value/day?dia=${dia}&mes=${mes}&ano=${ano}`);
     
     if (response && typeof response === 'object') {
       return Number(response.realizados || 0);
