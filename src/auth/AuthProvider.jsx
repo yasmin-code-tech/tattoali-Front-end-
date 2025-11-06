@@ -52,7 +52,7 @@ export default function AuthProvider({ children }) {
       setUser(authToSave.user);
       navigate("/agenda", { replace: true });
     } catch (err) {
-      clearAuth();
+      clearAuth()
       const msg =
         err?.data?.message ||
         err?.response?.data?.message ||
