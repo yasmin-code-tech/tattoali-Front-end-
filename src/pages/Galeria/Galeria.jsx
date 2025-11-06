@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import Layout from "../../baselayout/Layout";
 import { Images, Camera, Plus } from "lucide-react";
-
 import ModalFoto from "../../components/ModalFoto";
 import ModalUploadFoto from "../../components/ModalUploadFoto";
-
-import coringa from "../../assets/coringa.webp";
-import floresRealistas from "../../assets/floresRealistas.jpg";
-import rosa from "../../assets/rosa.webp";
+import { galeriaService } from "../../services/galeriaService";
 
 export default function Galeria() {
   const [portfolio, setPortfolio] = useState([]);
@@ -17,33 +13,13 @@ export default function Galeria() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [novaFoto, setNovaFoto] = useState({ file: null, descricao: "" });
 
-  // 🔹 Opção 1 (atual): usando dados locais
-  useEffect(() => {
-    // Simulando carregamento de dados locais
-    setTimeout(() => {
-      try {
-        const dadosFicticios = [
-          { id: 1, url: coringa, descricao: "Tatuagem estilo Coringa" },
-          { id: 2, url: floresRealistas, descricao: "Tatuagem de flores realistas" },
-          { id: 3, url: rosa, descricao: "Tatuagem de rosa" },
-        ];
-        setPortfolio(dadosFicticios);
-      } catch (error) {
-        console.error(error);
-        setErro("Falha ao carregar o portfólio. Tente novamente mais tarde.");
-      } finally {
-        setLoading(false);
-      }
-    }, 1000);
-  }, []);
+  
 
-  // 🔹 Opção 2 (para uso futuro com API real)
-  /*
+ 
   const fetchPortfolio = async () => {
     setLoading(true);
     try {
-      const response = await fetch("URL_DA_SUA_API/portfolio");
-      const data = await response.json();
+      const { data } = await galeriaService.getAllPhotosByUser();
       setPortfolio(data);
     } catch (error) {
       console.error(error);
@@ -52,54 +28,52 @@ export default function Galeria() {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchPortfolio();
   }, []);
-  */
 
-  // Editar
-  
-const handleEdit = (fotoAtualizada) => {
-  setPortfolio((prevPortfolio) =>
-    prevPortfolio.map((item) =>
-      item.id === fotoAtualizada.id ? { ...item, ...fotoAtualizada } : item
-    )
-  );
-  setFotoSelecionada(fotoAtualizada); // atualiza o modal com os novos dados
-};
+  // Editar foto localmente
+  const handleEdit = (fotoAtualizada) => {
+    setPortfolio((prevPortfolio) =>
+      prevPortfolio.map((item) =>
+        item.id === fotoAtualizada.id ? { ...item, ...fotoAtualizada } : item
+      )
+    );
+    setFotoSelecionada(fotoAtualizada);
+  };
 
-
-  // Deletar
-  const handleDelete = (foto) => {
+  // Deletar foto
+  const handleDelete = async (foto) => {
     const confirmDelete = window.confirm("Tem certeza que deseja apagar?");
-    if (confirmDelete) {
+    if (!confirmDelete) return;
+
+    try {
+      await galeriaService.deletePhoto(foto.id);
       setPortfolio((prev) => prev.filter((item) => item.id !== foto.id));
       setFotoSelecionada(null);
-
-      // 🔹 Futuro (API): descomente para atualizar via backend
-      // fetchPortfolio();
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao deletar foto. Tente novamente.");
     }
   };
 
-  // Upload
-  const handleUploadSubmit = (e) => {
-    e.preventDefault();
-    if (!novaFoto.file) return alert("Escolha uma imagem!");
+  // Upload de nova foto
+  const handleUploadSubmit = async (fotoData) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", fotoData.file);
+      if (fotoData.descricao) formData.append("descricao", fotoData.descricao);
 
-    const previewUrl = URL.createObjectURL(novaFoto.file);
-    const newItem = {
-      id: Date.now(),
-      url: previewUrl,
-      descricao: novaFoto.descricao || "Nova tatuagem",
-    };
-
-    setPortfolio((prev) => [newItem, ...prev]);
-    setNovaFoto({ file: null, descricao: "" });
-    setShowUploadModal(false);
-
-    // 🔹 Futuro (API): descomente para atualizar via backend
-    // fetchPortfolio();
+      await galeriaService.uploadPhoto(formData);
+      await fetchPortfolio(); // recarrega galeria
+      setShowUploadModal(false);
+      setNovaFoto({ file: null, descricao: "" });
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao enviar foto. Tente novamente.");
+    }
   };
 
   if (loading) {
@@ -141,7 +115,7 @@ const handleEdit = (fotoAtualizada) => {
 
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="mt-4 flex items-center gap-2 bg-red-500 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-medium transition"
+                className="mt-4 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition"
               >
                 <Plus className="w-4 h-4" /> Adicionar Foto
               </button>
