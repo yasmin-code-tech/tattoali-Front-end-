@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Layout from "../../baselayout/Layout";
 import { Image as ImageIcon } from "lucide-react";
 import { generateImage } from "../../services/imageService";
+import ModalImagensGeradas from "../../components/ModalImagensGeradas";
 
 export default function GeradorImagemChat() {
   const [prompt, setPrompt] = useState("");
@@ -9,6 +10,7 @@ export default function GeradorImagemChat() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [modalImagensGeradasOpen, setModalImagensGeradasOpen] = useState(false);
 
   const handleEnviarPrompt = async () => {
     if (!prompt.trim()) return;
@@ -69,9 +71,18 @@ export default function GeradorImagemChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Remove scrollbar da página quando o componente monta
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   return (
     <Layout>
       <style jsx>{`
+        /* Scrollbar customizada vermelha para área de chat */
         .scrollbar-red::-webkit-scrollbar {
           width: 8px;
         }
@@ -87,13 +98,27 @@ export default function GeradorImagemChat() {
           background: #b91c1c;
         }
       `}</style>
-      <div className="p-6 max-w-4xl mx-auto flex flex-col h-[90vh] bg-[#111111] rounded-2xl border border-gray-700">
-        <h1 className="text-3xl font-bold text-white mb-6">Gerador de Imagem por IA</h1>
-
-        
-
+      
+      <div className="max-w-6xl mx-auto px-6 pt-8 pb-0">
+        {/* Cabeçalho fixo */}
+        <div className="sticky top-0 z-10 bg-transparent mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <h1 className="text-3xl font-bold text-white">Gerador de Imagem por IA</h1>
+            <button
+              onClick={() => setModalImagensGeradasOpen(true)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition flex items-center gap-2"
+            >
+              <ImageIcon className="w-5 h-5" />
+              Imagens Geradas
+            </button>
+          </div>
+        </div>
+         
+        {/* Container do chat */}
+        <div className="flex flex-col h-[calc(110vh-220px)] bg-[#111111] rounded-2xl border border-gray-700 p-6 overflow-hidden">
+          
         {/* Área de chat */}
-        <div className="flex-1 overflow-y-auto mb-4 flex flex-col gap-4 px-2 ">
+        <div className="flex-1 overflow-y-auto mb-4 flex flex-col gap-4 px-2 scrollbar-red">
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -176,7 +201,7 @@ export default function GeradorImagemChat() {
         {/* Input de mensagem */}
         <div className="flex gap-2">
           <textarea
-            rows={2}
+            rows={1}
             placeholder="Digite o prompt da imagem..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -201,7 +226,15 @@ export default function GeradorImagemChat() {
             Enviar
           </button>
         </div>
+        </div>
       </div>
+      
+      {/* Modal de Imagens Geradas */}
+      <ModalImagensGeradas
+        isOpen={modalImagensGeradasOpen}
+        onClose={() => setModalImagensGeradasOpen(false)}
+      />
+      
       {/* overlay global removido; usamos balão de loading dentro do chat */}
     </Layout>
   );
