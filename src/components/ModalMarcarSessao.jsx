@@ -264,7 +264,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
               type="time"
               value={sessao.horario}
               onChange={(e) => handleChangeSessao(index, "horario", e.target.value)}
-              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white"
+              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100"
                       />
                     </div>
         </div>
@@ -293,7 +293,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
               placeholder="R$ 0,00"
                         value={sessao.valor}
               onChange={(e) => handleChangeSessao(index, "valor", e.target.value)}
-              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder-white"
+              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50"
                       />
                     </div>
           <div className="flex-1">
@@ -303,7 +303,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
               placeholder="Descrição"
                         value={sessao.descricao}
               onChange={(e) => handleChangeSessao(index, "descricao", e.target.value)}
-              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder-white"
+              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50"
                       />
                     </div>
                   </div>

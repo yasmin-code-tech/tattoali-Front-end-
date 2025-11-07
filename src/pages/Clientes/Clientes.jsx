@@ -5,21 +5,37 @@ import { FiUser, FiPlus, FiArrowDown, FiArrowUp, FiTrash2 } from "react-icons/fi
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
+import ModalConfirmarExclusaoCliente from "../../components/ModalConfirmarExclusaoCliente";
 import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
 import { buscarClientes, criarCliente, deletarCliente } from '../../services/clienteService';
+import { notifySuccess, notifyError } from '../../services/notificationService';
 
-const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes, onExcluir }) => (
-  <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
-    <div className="flex justify-between items-start mb-4">
-      <h3 className="text-lg font-semibold text-white">{nome}</h3>
-      <button
-        onClick={() => onExcluir(id, nome)}
-        className="text-gray-400 hover:text-red-500 transition"
-        title="Excluir cliente"
-      >
-        <FiTrash2 className="w-5 h-5" />
-      </button>
-    </div>
+const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes, onExcluir }) => {
+  const handleExcluirClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🗑️ ClienteCard - Botão de exclusão clicado:', { id, nome });
+    console.log('🗑️ ClienteCard - onExcluir é função?', typeof onExcluir);
+    if (typeof onExcluir === 'function') {
+      console.log('🗑️ ClienteCard - Chamando onExcluir...');
+      onExcluir(id, nome);
+    } else {
+      console.error('🗑️ ClienteCard - onExcluir não é uma função!', onExcluir);
+    }
+  };
+
+  return (
+    <div className="bg-[#111111] border border-gray-700 hover:border-red-600 transition rounded-xl p-6">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-lg font-semibold text-white">{nome}</h3>
+        <button
+          onClick={handleExcluirClick}
+          className="text-gray-400 hover:text-red-500 transition"
+          title="Excluir cliente"
+        >
+          <FiTrash2 className="w-5 h-5" />
+        </button>
+      </div>
     <p className="text-gray-400 text-sm mb-2">{contato}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
 
@@ -38,8 +54,9 @@ const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAt
         Detalhes
       </button>
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -49,11 +66,21 @@ export default function Clientes() {
   const [modalAtualizarOpen, setModalAtualizarOpen] = useState(false);
   const [modalCadastrarOpen, setModalCadastrarOpen] = useState(false);
   const [modalDetalhesOpen, setModalDetalhesOpen] = useState(false);
+  const [modalExclusaoOpen, setModalExclusaoOpen] = useState(false);
 
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  const [clienteParaExcluir, setClienteParaExcluir] = useState(null);
 
   // true = crescente, false = decrescente
   const [ordemCrescente, setOrdemCrescente] = useState(true);
+
+  // Debug: monitora mudanças no estado do modal
+  useEffect(() => {
+    console.log('🟡 Estado do modal de exclusão mudou:', {
+      modalExclusaoOpen,
+      clienteParaExcluir
+    });
+  }, [modalExclusaoOpen, clienteParaExcluir]);
 
   const removerAcentos = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -71,7 +98,7 @@ export default function Clientes() {
       setClientes(clientesOrdenados);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
-      alert('Erro ao carregar clientes. Tente novamente.');
+      notifyError('Erro ao carregar clientes. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -168,27 +195,51 @@ export default function Clientes() {
     setModalCadastrarOpen(true);
   };
 
-  const handleExcluirCliente = async (id, nome) => {
-    const confirmacao = window.confirm(
-      `Tem certeza que deseja excluir o cliente "${nome}"?\n\nEsta ação não pode ser desfeita.`
-    );
+  const handleAbrirModalExclusao = (id, nome) => {
+    console.log('🔴 handleAbrirModalExclusao chamado:', { id, nome });
+    console.log('🔴 Estados ANTES:', { 
+      modalExclusaoOpen, 
+      clienteParaExcluir 
+    });
+    
+    const novoCliente = { id, nome };
+    setClienteParaExcluir(novoCliente);
+    setModalExclusaoOpen(true);
+    
+    // Verifica após um pequeno delay se o estado foi atualizado
+    setTimeout(() => {
+      console.log('🔴 Estados DEPOIS (após setState):', {
+        modalExclusaoOpen: true, // Esperado
+        clienteParaExcluir: novoCliente // Esperado
+      });
+    }, 100);
+  };
 
-    if (!confirmacao) return;
-
+  const handleConfirmarExclusao = async (id, nome) => {
     try {
       await deletarCliente(id);
       setClientes(prev => prev.filter(c => c.id !== id));
-      alert('Cliente excluído com sucesso!');
+      setModalExclusaoOpen(false);
+      setClienteParaExcluir(null);
+      
+      // Mostra mensagem de sucesso usando o sistema de notificações
+      notifySuccess('Cliente excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir cliente:', error);
       
+      let errorMessage = 'Erro ao excluir cliente. Tente novamente.';
+      
       if (error.message?.includes('sessões') || error.message?.includes('foreign key') || error.message?.includes('constraint')) {
-        alert(`Não é possível excluir o cliente "${nome}".\n\nExistem sessões vinculadas a este cliente. Exclua ou transfira as sessões antes de excluir o cliente.`);
+        errorMessage = `Não é possível excluir o cliente "${nome}".\n\nExistem sessões vinculadas a este cliente. Exclua ou transfira as sessões antes de excluir o cliente.`;
       } else if (error.message?.includes('não encontrado')) {
-        alert('Cliente não encontrado.');
-      } else {
-        alert(error.message || 'Erro ao excluir cliente. Tente novamente.');
+        errorMessage = 'Cliente não encontrado.';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+      
+      // Mostra mensagem de erro usando o sistema de notificações
+      notifyError(errorMessage);
+      throw error; // Re-lança o erro para que o modal possa tratar se necessário
     }
   };
 
@@ -253,10 +304,15 @@ export default function Clientes() {
           {filteredClientes.map(cliente => (
             <ClienteCard
               key={cliente.id}
-              {...cliente}
+              id={cliente.id}
+              nome={cliente.nome}
+              contato={cliente.contato}
+              descricao={cliente.descricao}
+              endereco={cliente.endereco}
+              observacoes={cliente.observacoes}
               onAtualizar={handleAbrirModalAtualizar}
               onVerDetalhes={handleAbrirModalDetalhes}
-              onExcluir={handleExcluirCliente}
+              onExcluir={handleAbrirModalExclusao}
             />
           ))}
         </div>
@@ -302,11 +358,22 @@ export default function Clientes() {
             
             setClientes(prev => [...prev, clienteMapeado]);
             setModalCadastrarOpen(false);
+            // Notificação de sucesso já é exibida pelo ModalCadastrarCliente
           } catch (error) {
             console.error('Erro ao criar cliente:', error);
-            alert('Erro ao criar cliente. Tente novamente.');
+            notifyError('Erro ao criar cliente. Tente novamente.');
           }
         }}
+      />
+
+      <ModalConfirmarExclusaoCliente
+        isOpen={modalExclusaoOpen}
+        onClose={() => {
+          setModalExclusaoOpen(false);
+          setClienteParaExcluir(null);
+        }}
+        onConfirm={handleConfirmarExclusao}
+        cliente={clienteParaExcluir}
       />
     </Layout>
   );

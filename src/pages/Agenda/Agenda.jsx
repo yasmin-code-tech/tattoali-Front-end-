@@ -112,8 +112,18 @@ export default function Agenda() {
     setFiltroVisualizacao(novoFiltro);
   };
   
-  const handleAdicionarCliente = () => setModalNovoCliente(true);
-  const handleMarcarSessao = () => setModalMarcarSessao(true);
+  const handleAdicionarCliente = () => {
+    // Limpa o campo de busca quando abre o modal de cadastro
+    setValorBusca('');
+    setSessoes([]);
+    setModalNovoCliente(true);
+  };
+  const handleMarcarSessao = () => {
+    // Limpa o campo de busca quando abre o modal de marcar sessão
+    setValorBusca('');
+    setSessoes([]);
+    setModalMarcarSessao(true);
+  };
 
   const handleVerDetalhesCliente = async (sessao) => {
     // ... (lógica original do handleVerDetalhesCliente)
@@ -152,12 +162,33 @@ export default function Agenda() {
     if (dados) {
       if (dados.nome) {
         try {
-          await criarCliente(dados); 
-          console.log('Cliente criado no backend com sucesso.');
+          // Limpa o campo de busca por nome ANTES de criar o cliente para evitar problemas
+          setValorBusca('');
+          setSessoes([]);
+          
+          const clienteCriado = await criarCliente(dados); 
+          console.log('Cliente criado no backend com sucesso:', clienteCriado);
+          
+          // Garante que o campo de busca permaneça vazio após criar o cliente
+          // Isso evita que o nome do cliente seja usado no campo de busca
+          setValorBusca('');
+          setSessoes([]);
+          
+          // Verifica se o backend retornou um cliente existente (mesmo telefone)
+          if (clienteCriado && clienteCriado.nome && clienteCriado.nome !== dados.nome) {
+            notifyWarn(`Cliente com este telefone já existe: "${clienteCriado.nome}". O cliente foi vinculado ao telefone existente.`);
+          } else {
+            notifySuccess('Cliente cadastrado com sucesso!');
+          }
         } catch (error) {
           const errorMessage = error.message || "Falha ao cadastrar cliente.";
           console.error('Erro ao criar cliente:', error);
           setErro(errorMessage);
+          notifyError(errorMessage);
+          
+          // Garante que o campo de busca permaneça vazio mesmo em caso de erro
+          setValorBusca('');
+          setSessoes([]);
         }
       }
       else if (dados.sessoes && Array.isArray(dados.sessoes)) {
@@ -304,6 +335,13 @@ export default function Agenda() {
 
   // useEffect separado para busca por nome (com debounce)
   useEffect(() => {
+    // Ignora se o modal de cadastro de cliente estiver aberto
+    // Isso evita que a busca seja disparada quando o modal está aberto
+    if (modalNovoCliente) {
+      console.log('Modal de cadastro aberto, ignorando busca por nome');
+      return;
+    }
+    
     if (valorBusca.trim()) {
       console.log('=== USEEFFECT BUSCA POR NOME ===');
       console.log('Valor busca:', valorBusca);
@@ -320,7 +358,7 @@ export default function Agenda() {
       console.log('Campo nome vazio, limpando sessões de busca por nome...');
       setSessoes([]);
     }
-  }, [valorBusca]); // Só executa quando valorBusca muda
+  }, [valorBusca, modalNovoCliente]); // Só executa quando valorBusca ou modalNovoCliente muda
 
   return (
     <div id="agenda-screen" className="min-h-screen p-6">
@@ -361,13 +399,19 @@ export default function Agenda() {
                     type="text"
                     placeholder="Digite o nome do cliente"
                     value={valorBusca}
-                    onChange={(e) => setValorBusca(e.target.value)}
+                    onChange={(e) => {
+                      // Ignora mudanças no campo de busca quando o modal de cadastro está aberto
+                      if (!modalNovoCliente && !modalMarcarSessao) {
+                        setValorBusca(e.target.value);
+                      }
+                    }}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' && !modalNovoCliente && !modalMarcarSessao) {
                         handleBuscarAgenda();
                       }
                     }}
-                    className="input-field bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[200px]"
+                    disabled={modalNovoCliente || modalMarcarSessao}
+                    className="input-field bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -562,7 +606,47 @@ export default function Agenda() {
           <ModalCadastrarCliente
             isOpen={modalNovoCliente}
             onClose={() => setModalNovoCliente(false)}
-            onSave={handleModalSuccess} 
+            onSave={async (novoCliente) => {
+              try {
+                // Preserva o filtro de visualização atual antes de criar o cliente
+                const filtroAtual = filtroVisualizacao;
+                
+                // Limpa o campo de busca por nome ANTES de criar o cliente
+                setValorBusca('');
+                setSessoes([]);
+                
+                const clienteCriado = await criarCliente(novoCliente);
+                console.log('Cliente criado no backend com sucesso:', clienteCriado);
+                
+                // Garante que o campo de busca permaneça vazio após criar o cliente
+                setValorBusca('');
+                setSessoes([]);
+                
+                // Garante que o filtro de visualização não seja alterado
+                // Se foi alterado durante o processo, restaura o filtro original
+                if (filtroVisualizacao !== filtroAtual) {
+                  setFiltroVisualizacao(filtroAtual);
+                }
+                
+                // Verifica se o backend retornou um cliente existente (mesmo telefone)
+                if (clienteCriado && clienteCriado.nome && clienteCriado.nome !== novoCliente.nome) {
+                  notifyWarn(`Cliente com este telefone já existe: "${clienteCriado.nome}". O cliente foi vinculado ao telefone existente.`);
+                }
+                // Notificação de sucesso já é exibida pelo ModalCadastrarCliente
+                
+                // Recarrega a agenda do dia (preservando o filtro atual)
+                carregarAgendaDoDia(chaveData);
+              } catch (error) {
+                const errorMessage = error.message || "Falha ao cadastrar cliente.";
+                console.error('Erro ao criar cliente:', error);
+                setErro(errorMessage);
+                notifyError(errorMessage);
+                
+                // Garante que o campo de busca permaneça vazio mesmo em caso de erro
+                setValorBusca('');
+                setSessoes([]);
+              }
+            }} 
           />
           <ModalMarcarSessao
             isOpen={modalMarcarSessao}
