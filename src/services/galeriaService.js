@@ -39,4 +39,14 @@ export const galeriaService = {
     // DELETE /api/galeria/:id
     return await api.del(`/api/galeria/${id}`);
   },
+
+  /**
+   * Atualiza a descrição de uma foto (precisa de token)
+   * @param {number|string} id - ID da foto
+   * @param {string} descricao - Nova descrição da foto
+   */
+  async updatePhotoDescription(id, descricao) {
+    // PATCH /api/galeria/description/:id
+    return await api.patch(`/api/galeria/description/${id}`, { descricao });
+  },
 };

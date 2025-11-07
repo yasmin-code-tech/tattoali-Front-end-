@@ -58,6 +58,36 @@ export default function Galeria() {
     setModalExclusaoOpen(true);
   };
 
+  // Atualizar descrição da foto
+  const handleUpdateDescription = async (fotoId, novaDescricao) => {
+    try {
+      await galeriaService.updatePhotoDescription(fotoId, novaDescricao);
+      notifySuccess('Descrição atualizada com sucesso!');
+      // Atualiza a foto na lista local
+      setPortfolio((prev) => prev.map((item) => {
+        const itemId = item.id || item.photo_id || item.photoId;
+        if (itemId === fotoId) {
+          return { ...item, descricao: novaDescricao };
+        }
+        return item;
+      }));
+      // Atualiza a foto selecionada se for a mesma
+      if (fotoSelecionada) {
+        const fotoIdSelecionada = fotoSelecionada.id || fotoSelecionada.photo_id || fotoSelecionada.photoId;
+        if (fotoIdSelecionada === fotoId) {
+          setFotoSelecionada({ ...fotoSelecionada, descricao: novaDescricao });
+        }
+      }
+      // Recarrega a galeria para garantir sincronização
+      await fetchPortfolio();
+    } catch (error) {
+      console.error('❌ Erro ao atualizar descrição:', error);
+      const errorMessage = error?.data?.mensagem || error?.data?.message || error?.message || "Erro ao atualizar descrição. Tente novamente.";
+      notifyError(errorMessage);
+      throw error;
+    }
+  };
+
   // Deletar foto (chamado pelo modal de confirmação)
   const handleConfirmarExclusao = async (foto) => {
     // O backend pode retornar 'id' ou outro campo
@@ -235,6 +265,7 @@ export default function Galeria() {
           foto={fotoSelecionada}
           onClose={() => setFotoSelecionada(null)}
           onDelete={handleAbrirModalExclusao}
+          onUpdate={handleUpdateDescription}
         />
 
         {/* Modal de confirmação de exclusão */}

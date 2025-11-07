@@ -218,15 +218,7 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
                       )}
                     </div>
                     <div className="p-3">
-                      {prompt ? (
-                        <p className="text-white text-sm mb-2 line-clamp-2" title={prompt}>
-                          {prompt}
-                        </p>
-                      ) : (
-                        <p className="text-gray-500 text-sm mb-2 italic">
-                          Sem prompt disponível
-                        </p>
-                      )}
+                      
                       {createdAt && (
                         <p className="text-gray-400 text-xs mb-2">
                           {formatDate(createdAt)}
@@ -287,15 +279,7 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
               alt={selectedImage.prompt || 'Imagem gerada'}
               className="w-full h-auto rounded-lg border border-gray-700 mb-4"
             />
-            {selectedImage.prompt ? (
-              <p className="text-white mb-2">
-                <span className="font-semibold">Prompt:</span> {selectedImage.prompt}
-              </p>
-            ) : (
-              <p className="text-gray-500 mb-2 italic">
-                Prompt não disponível
-              </p>
-            )}
+            
             {selectedImage.createdAt && (
               <p className="text-gray-400 text-sm mb-4">
                 <span className="font-semibold">Data:</span> {formatDate(selectedImage.createdAt)}
