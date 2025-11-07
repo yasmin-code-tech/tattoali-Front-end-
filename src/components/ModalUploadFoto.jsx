@@ -36,25 +36,16 @@ export default function ModalUploadFoto({ novaFoto, setNovaFoto, onClose, onSubm
     try {
       setEnviando(true);
 
-      // Cria FormData para enviar imagem + descrição
-      const formData = new FormData();
-      formData.append("image", novaFoto.file);
-      if (novaFoto.descricao) {
-        formData.append("descricao", novaFoto.descricao);
-      }
+      // Passa os dados para o componente pai fazer o upload
+      // O componente pai (Galeria.jsx) é responsável por fazer o upload e atualizar a lista
+      await onSubmit(novaFoto);
 
-      // Chamada real ao backend via galeriaService
-      const fotoCriada = await galeriaService.uploadPhoto(formData);
-
-      // Atualiza estado do componente pai
-      onSubmit(fotoCriada);
-
-      // Limpa campos e fecha modal
+      // Limpa campos e fecha modal (só se o upload foi bem-sucedido)
       setNovaFoto({ file: null, descricao: "" });
       onClose();
     } catch (error) {
       console.error("Erro ao enviar a foto:", error);
-      alert("Falha ao enviar a foto. Verifique sua conexão e tente novamente.");
+      // Não fecha o modal em caso de erro para o usuário poder tentar novamente
     } finally {
       setEnviando(false);
     }

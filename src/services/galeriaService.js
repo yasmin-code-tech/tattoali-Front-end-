@@ -23,15 +23,12 @@ export const galeriaService = {
   /**
    * Faz upload de uma nova foto (precisa de token)
    * @param {FormData} formData - Deve conter o campo 'image'
+   * Nota: Não define Content-Type manualmente - o navegador define automaticamente com o boundary correto
    */
   async uploadPhoto(formData) {
     // POST /api/galeria
-    // Importante: enviar multipart/form-data
-    return await api.post("/api/galeria", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    // O FormData já define o Content-Type automaticamente (multipart/form-data com boundary)
+    return await api.post("/api/galeria", formData);
   },
 
   /**
@@ -40,6 +37,6 @@ export const galeriaService = {
    */
   async deletePhoto(id) {
     // DELETE /api/galeria/:id
-    return await api.delete(`/api/galeria/${id}`);
+    return await api.del(`/api/galeria/${id}`);
   },
 };

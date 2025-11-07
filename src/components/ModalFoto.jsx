@@ -1,64 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaSave, FaUpload } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import { galeriaService } from "../services/galeriaService"; 
 
-export default function ModalFoto({ foto, onClose, onEdit, onDelete }) {
+export default function ModalFoto({ foto, onClose, onDelete }) {
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [descricaoEditada, setDescricaoEditada] = useState("");
-  const [novaFoto, setNovaFoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
     if (foto) {
-      setDescricaoEditada(foto.descricao || "");
-      setPreviewUrl(foto.url);
-      setEditMode(false);
-      setNovaFoto(null);
+      // O backend retorna apenas o filePath (ex: "galeria/imagem.jpg")
+      // Construímos a URL completa usando a URL do bucket
+      const BUCKET_PUB_URL = import.meta.env.VITE_BUCKET_PUB_URL || 'https://pub-a2e43516b1984deb95bc4adfd3070bed.r2.dev';
+      const fullUrl = foto.url?.startsWith('http') ? foto.url : `${BUCKET_PUB_URL}/${foto.url}`;
+      setPreviewUrl(fullUrl);
     }
   }, [foto]);
 
   if (!foto) return null;
-
-  const handleImagemChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNovaFoto(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSalvarEdicao = async () => {
-    try {
-      let fotoAtualizada = { ...foto, descricao: descricaoEditada };
-
-      if (novaFoto) {
-        const formData = new FormData();
-        formData.append("foto", novaFoto);
-        formData.append("descricao", descricaoEditada);
-
-        // Atualiza a foto existente no backend
-        const fotoEnviada = await galeriaService.updatePhoto(foto.id, formData);
-
-        fotoAtualizada = {
-          ...fotoAtualizada,
-          url: fotoEnviada.url,
-          descricao: fotoEnviada.descricao,
-        };
-      } else if (descricaoEditada !== foto.descricao) {
-        // Atualiza apenas a descrição
-        const fotoEnviada = await galeriaService.updatePhoto(foto.id, { descricao: descricaoEditada });
-        fotoAtualizada.descricao = fotoEnviada.descricao;
-      }
-
-      onEdit(fotoAtualizada);
-      setEditMode(false);
-      setNovaFoto(null);
-    } catch (error) {
-      console.error("Erro ao atualizar foto:", error);
-      alert("Falha ao atualizar a foto. Tente novamente.");
-    }
-  };
 
   const handleDeletarFoto = async () => {
     try {
@@ -86,55 +44,19 @@ export default function ModalFoto({ foto, onClose, onEdit, onDelete }) {
 
           <img
             src={previewUrl}
-            alt={descricaoEditada || "Foto do portfólio"}
+            alt={foto.descricao || "Foto do portfólio"}
             className="w-full h-60 object-cover rounded-xl mb-4"
+            onError={(e) => {
+              console.error('Erro ao carregar imagem:', previewUrl);
+              e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImagem não encontrada%3C/text%3E%3C/svg%3E';
+            }}
           />
 
-          {editMode && (
-            <div className="flex flex-col items-center mb-4">
-              <label className="flex items-center gap-2 text-sm cursor-pointer bg-gray-800 text-gray-200 px-3 py-2 rounded-xl hover:bg-gray-700 transition">
-                <FaUpload /> Alterar Foto
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImagemChange}
-                />
-              </label>
-            </div>
-          )}
-
-          {editMode ? (
-            <input
-              type="text"
-              value={descricaoEditada}
-              onChange={(e) => setDescricaoEditada(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6 transition"
-              placeholder="Digite a descrição da foto"
-            />
-          ) : (
-            <p className="text-gray-300 text-sm mb-6 text-center">
-              {foto.descricao || "Sem descrição disponível."}
-            </p>
-          )}
+          <p className="text-gray-300 text-sm mb-6 text-center">
+            {foto.descricao || "Sem descrição disponível."}
+          </p>
 
           <div className="flex justify-center gap-4">
-            {editMode ? (
-              <button
-                onClick={handleSalvarEdicao}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md transition"
-              >
-                <FaSave /> Salvar
-              </button>
-            ) : (
-              <button
-                onClick={() => setEditMode(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl shadow-md transition"
-              >
-                <FaEdit /> Editar
-              </button>
-            )}
-
             <button
               onClick={() => setConfirmandoExclusao(true)}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-md transition"

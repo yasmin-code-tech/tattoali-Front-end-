@@ -21,10 +21,17 @@ export async function apiFetch(path, options = {}) {
 
   const url = path.startsWith("http") ? path : baseURL + path;
 
- 
+  // Para FormData, não devemos definir Content-Type manualmente
+  // O navegador define automaticamente com o boundary correto
+  const isFormData = options.body instanceof FormData;
+  
   const headers = new Headers(options.headers || {});
-  if (!headers.has("Content-Type") && options.body && !(options.body instanceof FormData)) {
+  if (!isFormData && !headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
+  }
+  // Se for FormData, remove qualquer Content-Type que possa ter sido definido
+  if (isFormData && headers.has("Content-Type")) {
+    headers.delete("Content-Type");
   }
 
   
@@ -36,11 +43,23 @@ export async function apiFetch(path, options = {}) {
   }
 
 
+  // Para FormData, cria headers apenas com Authorization (sem Content-Type)
+  // O navegador define automaticamente o Content-Type com boundary
+  const finalHeaders = isFormData 
+    ? (() => {
+        const fdHeaders = new Headers();
+        if (auth?.token) {
+          fdHeaders.set("Authorization", `Bearer ${auth.token}`);
+        }
+        return fdHeaders;
+      })()
+    : headers;
+
   const init = {
     method: options.method || "GET",
-    headers,
+    headers: finalHeaders,
     body:
-      options.body instanceof FormData
+      isFormData
         ? options.body
         : options.body && typeof options.body !== "string"
           ? JSON.stringify(options.body)
@@ -49,8 +68,8 @@ export async function apiFetch(path, options = {}) {
   };
 
   console.log('Fazendo requisição para:', url);
-  console.log('Headers:', Object.fromEntries(headers.entries()));
-  console.log('Body:', options.body);
+  console.log('Headers:', Object.fromEntries(finalHeaders.entries()));
+  console.log('Body:', isFormData ? 'FormData' : options.body);
   
   let res = await fetch(url, init);
   console.log('Resposta recebida:', res.status, res.statusText);
@@ -59,8 +78,11 @@ export async function apiFetch(path, options = {}) {
     try {
       await ensureRefreshToken(auth.refreshToken);
       const newAuth = loadAuth();
-      const retryHeaders = new Headers(headers);
-      if (newAuth?.token) retryHeaders.set("Authorization", `Bearer ${newAuth.token}`);
+      // Para retry, usa os mesmos headers finais (respeitando FormData)
+      const retryHeaders = new Headers(finalHeaders);
+      if (newAuth?.token) {
+        retryHeaders.set("Authorization", `Bearer ${newAuth.token}`);
+      }
       res = await fetch(url, { ...init, headers: retryHeaders });
     } catch {
       clearAuth();

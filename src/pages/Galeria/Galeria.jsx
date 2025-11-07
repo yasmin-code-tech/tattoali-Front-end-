@@ -19,8 +19,17 @@ export default function Galeria() {
   const fetchPortfolio = async () => {
     setLoading(true);
     try {
-      const { data } = await galeriaService.getAllPhotosByUser();
-      setPortfolio(data);
+      const photos = await galeriaService.getAllPhotosByUser();
+      // A API retorna o array diretamente, não um objeto com 'data'
+      const photosArray = Array.isArray(photos) ? photos : [];
+      // O backend retorna apenas o filePath (ex: "galeria/imagem.jpg")
+      // Construímos a URL completa usando a URL do bucket
+      const BUCKET_PUB_URL = import.meta.env.VITE_BUCKET_PUB_URL || 'https://pub-a2e43516b1984deb95bc4adfd3070bed.r2.dev';
+      const photosWithFullUrl = photosArray.map(photo => ({
+        ...photo,
+        url: photo.url?.startsWith('http') ? photo.url : `${BUCKET_PUB_URL}/${photo.url}`
+      }));
+      setPortfolio(photosWithFullUrl);
     } catch (error) {
       console.error(error);
       setErro("Falha ao carregar o portfólio do servidor.");
@@ -33,16 +42,6 @@ export default function Galeria() {
   useEffect(() => {
     fetchPortfolio();
   }, []);
-
-  // Editar foto localmente
-  const handleEdit = (fotoAtualizada) => {
-    setPortfolio((prevPortfolio) =>
-      prevPortfolio.map((item) =>
-        item.id === fotoAtualizada.id ? { ...item, ...fotoAtualizada } : item
-      )
-    );
-    setFotoSelecionada(fotoAtualizada);
-  };
 
   // Deletar foto
   const handleDelete = async (foto) => {
@@ -61,18 +60,40 @@ export default function Galeria() {
 
   // Upload de nova foto
   const handleUploadSubmit = async (fotoData) => {
+    if (!fotoData || !fotoData.file) {
+      alert("Selecione uma imagem antes de enviar!");
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("image", fotoData.file);
-      if (fotoData.descricao) formData.append("descricao", fotoData.descricao);
+      if (fotoData.descricao) {
+        formData.append("descricao", fotoData.descricao);
+      }
+
+      // Debug: verifica se o arquivo está no FormData
+      console.log('📤 Enviando foto:', {
+        fileName: fotoData.file.name,
+        fileSize: fotoData.file.size,
+        fileType: fotoData.file.type,
+        hasDescricao: !!fotoData.descricao
+      });
 
       await galeriaService.uploadPhoto(formData);
-      await fetchPortfolio(); // recarrega galeria
+      
+      // Recarrega a galeria para mostrar a nova foto
+      await fetchPortfolio();
+      
+      // Fecha o modal e limpa o estado
       setShowUploadModal(false);
       setNovaFoto({ file: null, descricao: "" });
     } catch (error) {
-      console.error(error);
-      alert("Erro ao enviar foto. Tente novamente.");
+      console.error('❌ Erro ao enviar foto:', error);
+      const errorMessage = error?.data?.mensagem || error?.data?.message || error?.message || "Erro ao enviar foto. Tente novamente.";
+      alert(errorMessage);
+      // Re-lança o erro para o modal não fechar
+      throw error;
     }
   };
 
@@ -134,6 +155,10 @@ export default function Galeria() {
                       src={item.url}
                       alt={item.descricao || "Tatuagem"}
                       className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        console.error('Erro ao carregar imagem:', item.url);
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImagem não encontrada%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
                       <Camera className="text-white w-6 h-6 mb-2" />
@@ -157,7 +182,6 @@ export default function Galeria() {
         <ModalFoto
           foto={fotoSelecionada}
           onClose={() => setFotoSelecionada(null)}
-          onEdit={handleEdit}
           onDelete={handleDelete}
         />
 
