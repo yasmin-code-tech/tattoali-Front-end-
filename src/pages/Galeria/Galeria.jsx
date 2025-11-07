@@ -3,7 +3,9 @@ import Layout from "../../baselayout/Layout";
 import { Images, Camera, Plus } from "lucide-react";
 import ModalFoto from "../../components/ModalFoto";
 import ModalUploadFoto from "../../components/ModalUploadFoto";
+import ModalConfirmarExclusaoFoto from "../../components/ModalConfirmarExclusaoFoto";
 import { galeriaService } from "../../services/galeriaService";
+import { notifySuccess, notifyError } from "../../services/notificationService";
 
 export default function Galeria() {
   const [portfolio, setPortfolio] = useState([]);
@@ -12,6 +14,8 @@ export default function Galeria() {
   const [fotoSelecionada, setFotoSelecionada] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [novaFoto, setNovaFoto] = useState({ file: null, descricao: "" });
+  const [modalExclusaoOpen, setModalExclusaoOpen] = useState(false);
+  const [fotoParaExcluir, setFotoParaExcluir] = useState(null);
 
   
 
@@ -22,13 +26,18 @@ export default function Galeria() {
       const photos = await galeriaService.getAllPhotosByUser();
       // A API retorna o array diretamente, não um objeto com 'data'
       const photosArray = Array.isArray(photos) ? photos : [];
+      console.log('📸 Fotos recebidas do backend:', photosArray);
+      
       // O backend retorna apenas o filePath (ex: "galeria/imagem.jpg")
       // Construímos a URL completa usando a URL do bucket
       const BUCKET_PUB_URL = import.meta.env.VITE_BUCKET_PUB_URL || 'https://pub-a2e43516b1984deb95bc4adfd3070bed.r2.dev';
-      const photosWithFullUrl = photosArray.map(photo => ({
-        ...photo,
-        url: photo.url?.startsWith('http') ? photo.url : `${BUCKET_PUB_URL}/${photo.url}`
-      }));
+      const photosWithFullUrl = photosArray.map(photo => {
+        console.log('📸 Foto individual:', photo);
+        return {
+          ...photo,
+          url: photo.url?.startsWith('http') ? photo.url : `${BUCKET_PUB_URL}/${photo.url}`
+        };
+      });
       setPortfolio(photosWithFullUrl);
     } catch (error) {
       console.error(error);
@@ -43,25 +52,51 @@ export default function Galeria() {
     fetchPortfolio();
   }, []);
 
-  // Deletar foto
-  const handleDelete = async (foto) => {
-    const confirmDelete = window.confirm("Tem certeza que deseja apagar?");
-    if (!confirmDelete) return;
+  // Abre o modal de confirmação de exclusão
+  const handleAbrirModalExclusao = (foto) => {
+    setFotoParaExcluir(foto);
+    setModalExclusaoOpen(true);
+  };
+
+  // Deletar foto (chamado pelo modal de confirmação)
+  const handleConfirmarExclusao = async (foto) => {
+    // O backend pode retornar 'id' ou outro campo
+    const fotoId = foto.id || foto.photo_id || foto.photoId;
+    console.log('🗑️ Galeria - Deletando foto:', { foto, fotoId });
+    
+    if (!fotoId) {
+      console.error('ID da foto não encontrado:', foto);
+      notifyError("Erro: ID da foto não encontrado.");
+      throw new Error("ID da foto não encontrado");
+    }
 
     try {
-      await galeriaService.deletePhoto(foto.id);
-      setPortfolio((prev) => prev.filter((item) => item.id !== foto.id));
+      await galeriaService.deletePhoto(fotoId);
+      // Fecha o modal primeiro para evitar que a imagem tente carregar
       setFotoSelecionada(null);
+      // Remove a foto da lista local
+      setPortfolio((prev) => prev.filter((item) => {
+        const itemId = item.id || item.photo_id || item.photoId;
+        return itemId !== fotoId;
+      }));
+      // Recarrega a galeria para garantir sincronização
+      await fetchPortfolio();
+      notifySuccess('Foto excluída com sucesso!');
+      // Fecha o modal de confirmação
+      setModalExclusaoOpen(false);
+      setFotoParaExcluir(null);
     } catch (error) {
-      console.error(error);
-      alert("Erro ao deletar foto. Tente novamente.");
+      console.error('❌ Erro ao deletar foto:', error);
+      const errorMessage = error?.data?.mensagem || error?.data?.message || error?.message || "Erro ao deletar foto. Tente novamente.";
+      notifyError(errorMessage);
+      throw error; // Re-lança o erro para o modal não fechar
     }
   };
 
   // Upload de nova foto
   const handleUploadSubmit = async (fotoData) => {
     if (!fotoData || !fotoData.file) {
-      alert("Selecione uma imagem antes de enviar!");
+      notifyError("Selecione uma imagem antes de enviar!");
       return;
     }
 
@@ -85,13 +120,16 @@ export default function Galeria() {
       // Recarrega a galeria para mostrar a nova foto
       await fetchPortfolio();
       
+      // Notifica sucesso
+      notifySuccess('Foto adicionada com sucesso!');
+      
       // Fecha o modal e limpa o estado
       setShowUploadModal(false);
       setNovaFoto({ file: null, descricao: "" });
     } catch (error) {
       console.error('❌ Erro ao enviar foto:', error);
       const errorMessage = error?.data?.mensagem || error?.data?.message || error?.message || "Erro ao enviar foto. Tente novamente.";
-      alert(errorMessage);
+      notifyError(errorMessage);
       // Re-lança o erro para o modal não fechar
       throw error;
     }
@@ -100,8 +138,10 @@ export default function Galeria() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center h-full">
-          <p className="text-white">Carregando portfólio...</p>
+        <div className="flex flex-col justify-center items-center h-[calc(100vh-200px)]">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-500 mb-4"></div>
+          <p className="text-white text-lg font-medium">Carregando portfólio...</p>
+          <p className="text-gray-400 text-sm mt-2">Aguarde um momento</p>
         </div>
       </Layout>
     );
@@ -136,18 +176,29 @@ export default function Galeria() {
 
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="mt-4 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition"
+                disabled={loading}
+                className="mt-4 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" /> Adicionar Foto
               </button>
             </div>
 
+            {/* Indicador de carregamento durante recarregamento */}
+            {loading && portfolio.length > 0 && (
+              <div className="flex flex-col items-center justify-center py-8 mb-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-3"></div>
+                <p className="text-gray-400 text-sm">Atualizando portfólio...</p>
+              </div>
+            )}
+
             {/* Grid de imagens */}
-            {portfolio.length > 0 ? (
+            {!loading && portfolio.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {portfolio.map((item) => (
+                {portfolio.map((item) => {
+                  const itemId = item.id || item.photo_id || item.photoId || `photo-${Math.random()}`;
+                  return (
                   <div
-                    key={item.id}
+                    key={itemId}
                     className="relative group rounded-xl overflow-hidden bg-gray-900 cursor-pointer transition-transform hover:scale-[1.02]"
                     onClick={() => setFotoSelecionada(item)}
                   >
@@ -167,14 +218,15 @@ export default function Galeria() {
                       </p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
-            ) : (
+            ) : !loading ? (
               <div className="flex flex-col items-center justify-center text-gray-400 mt-10">
                 <Images className="w-10 h-10 mb-3 opacity-60" />
                 <p>Nenhuma imagem adicionada ao portfólio ainda.</p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -182,7 +234,18 @@ export default function Galeria() {
         <ModalFoto
           foto={fotoSelecionada}
           onClose={() => setFotoSelecionada(null)}
-          onDelete={handleDelete}
+          onDelete={handleAbrirModalExclusao}
+        />
+
+        {/* Modal de confirmação de exclusão */}
+        <ModalConfirmarExclusaoFoto
+          isOpen={modalExclusaoOpen}
+          onClose={() => {
+            setModalExclusaoOpen(false);
+            setFotoParaExcluir(null);
+          }}
+          onConfirm={handleConfirmarExclusao}
+          foto={fotoParaExcluir}
         />
 
         {/* Modal de upload */}
