@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getGeneratedImages } from '../services/imageService';
-import { notifyError } from '../services/notificationService';
+import { getGeneratedImages, deleteGeneratedImage } from '../services/imageService';
+import { notifyError, notifySuccess } from '../services/notificationService';
 
 export default function ModalImagensGeradas({ isOpen, onClose }) {
   const [images, setImages] = useState([]);
@@ -11,7 +11,10 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
     setLoading(true);
     try {
       const imagensData = await getGeneratedImages();
-      setImages(Array.isArray(imagensData) ? imagensData : []);
+      console.log('📸 Imagens recebidas do backend:', imagensData);
+      const imagensArray = Array.isArray(imagensData) ? imagensData : [];
+      console.log('📸 Array processado:', imagensArray);
+      setImages(imagensArray);
     } catch (error) {
       console.error('Erro ao carregar imagens:', error);
       notifyError('Erro ao carregar imagens geradas. Tente novamente.');
@@ -23,12 +26,14 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
 
   const handleDownload = async (imageUrl, prompt) => {
     try {
+      // Mesma lógica usada na tela de GeradorImagem
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error("Falha ao baixar a imagem");
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
+      // Tenta extrair nome do arquivo da URL
       const fallback = `imagem-${Date.now()}.png`;
       const fromUrl = (() => {
         try {
@@ -44,6 +49,26 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
       URL.revokeObjectURL(url);
     } catch (e) {
       notifyError(e?.message || "Não foi possível iniciar o download.");
+    }
+  };
+
+  const handleDelete = async (imageId, e) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Tem certeza que deseja excluir esta imagem?')) {
+      return;
+    }
+
+    try {
+      await deleteGeneratedImage(imageId);
+      setImages(prev => prev.filter(img => (img.image_id || img.id) !== imageId));
+      if (selectedImage && (selectedImage.imageId || selectedImage.image_id || selectedImage.id) === imageId) {
+        setSelectedImage(null);
+      }
+      notifySuccess('Imagem excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao deletar imagem:', error);
+      notifyError('Erro ao excluir imagem. Tente novamente.');
     }
   };
 
@@ -138,57 +163,87 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
           <div className="flex-1 overflow-y-auto scrollbar-red">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {images.map((item, index) => {
-                const imageUrl = item.imageUrl || item.image || item.url;
-                const prompt = item.prompt || item.description || null; // null se não houver prompt
+                // Backend retorna { image_id, url, ... }
+                const imageUrl = item.url || item.imageUrl || item.image;
+                const prompt = item.prompt || item.description || null;
                 const createdAt = item.createdAt || item.created_at || item.date;
+                const imageId = item.image_id || item.id;
+                
+                console.log(`🖼️ Imagem ${index}:`, { imageUrl, imageId, item });
+                
+                if (!imageUrl) {
+                  console.warn(`⚠️ Imagem ${index} sem URL:`, item);
+                }
                 
                 return (
                   <div
-                    key={item.id || index}
+                    key={imageId || index}
                     className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-red-600 transition-colors"
                   >
                     <div 
-                      className="relative aspect-square cursor-pointer"
-                      onClick={() => setSelectedImage({ imageUrl, prompt, createdAt })}
+                      className="relative aspect-square cursor-pointer overflow-hidden bg-gray-900"
+                      onClick={() => setSelectedImage({ imageUrl, prompt, createdAt, imageId })}
                     >
-                      <img
-                        src={imageUrl}
-                        alt={prompt || 'Imagem gerada'}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23333" width="400" height="400"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImagem não encontrada%3C/text%3E%3C/svg%3E';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-opacity flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
+                      {imageUrl ? (
+                        <>
+                          <img
+                            src={imageUrl}
+                            alt={prompt || 'Imagem gerada'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('❌ Erro ao carregar imagem:', imageUrl);
+                              e.target.style.display = 'none';
+                              const errorDiv = e.target.nextElementSibling;
+                              if (errorDiv) {
+                                errorDiv.style.display = 'flex';
+                              }
+                            }}
+                            onLoad={() => {
+                              console.log('✅ Imagem carregada com sucesso:', imageUrl);
+                            }}
+                          />
+                          <div className="hidden absolute inset-0 bg-gray-900 flex items-center justify-center">
+                            <p className="text-gray-500 text-sm">Erro ao carregar imagem</p>
+                          </div>
+                          <div className="absolute inset-0 bg-black opacity-0 hover:opacity-30 transition-opacity flex items-center justify-center pointer-events-none">
+                            <svg className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                          <p className="text-gray-500 text-sm">URL não disponível</p>
+                        </div>
+                      )}
                     </div>
                     <div className="p-3">
-                      {prompt ? (
-                        <p className="text-white text-sm mb-2 line-clamp-2" title={prompt}>
-                          {prompt}
-                        </p>
-                      ) : (
-                        <p className="text-gray-500 text-sm mb-2 italic">
-                          Sem prompt disponível
-                        </p>
-                      )}
+                      
                       {createdAt && (
                         <p className="text-gray-400 text-xs mb-2">
                           {formatDate(createdAt)}
                         </p>
                       )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(imageUrl, prompt || 'imagem-gerada');
-                        }}
-                        className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
-                      >
-                        Download
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(imageUrl, prompt || 'imagem-gerada');
+                          }}
+                          className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
+                        >
+                          Download
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(imageId, e)}
+                          className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition"
+                          title="Excluir imagem"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -224,15 +279,7 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
               alt={selectedImage.prompt || 'Imagem gerada'}
               className="w-full h-auto rounded-lg border border-gray-700 mb-4"
             />
-            {selectedImage.prompt ? (
-              <p className="text-white mb-2">
-                <span className="font-semibold">Prompt:</span> {selectedImage.prompt}
-              </p>
-            ) : (
-              <p className="text-gray-500 mb-2 italic">
-                Prompt não disponível
-              </p>
-            )}
+            
             {selectedImage.createdAt && (
               <p className="text-gray-400 text-sm mb-4">
                 <span className="font-semibold">Data:</span> {formatDate(selectedImage.createdAt)}
@@ -245,6 +292,27 @@ export default function ModalImagensGeradas({ isOpen, onClose }) {
               >
                 Download
               </button>
+              {selectedImage.imageId && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (window.confirm('Tem certeza que deseja excluir esta imagem?')) {
+                      try {
+                        await deleteGeneratedImage(selectedImage.imageId);
+                        setImages(prev => prev.filter(img => (img.image_id || img.id) !== selectedImage.imageId));
+                        setSelectedImage(null);
+                        notifySuccess('Imagem excluída com sucesso!');
+                      } catch (error) {
+                        console.error('Erro ao deletar imagem:', error);
+                        notifyError('Erro ao excluir imagem. Tente novamente.');
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition"
+                >
+                  Excluir
+                </button>
+              )}
               <button
                 onClick={() => setSelectedImage(null)}
                 className="px-4 py-2 border border-gray-600 text-gray-300 hover:text-white rounded-lg font-medium transition"
