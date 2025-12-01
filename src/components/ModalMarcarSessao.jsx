@@ -11,6 +11,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
   const [sessoes, setSessoes] = useState([
     { data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }
   ]);
+  const [sessaoErrors, setSessaoErrors] = useState([]);
   const [modalKey, setModalKey] = useState(0);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       setClienteSelecionado(null);
       setSearch("");
       setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);
+      setSessaoErrors([]);
       setSalvando(false); 
       setModalKey(prev => prev + 1);
       carregarClientes();
@@ -88,12 +90,14 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
 
   const adicionarSessao = () => {
     setSessoes([...sessoes, { data: dataSelecionada || "", horario: "", numeroSessao: `${sessoes.length + 1}`, valor: "", descricao: "" }]);
+    setSessaoErrors((prev) => [...prev, {}]);
   };
 
   const removerSessao = (index) => {
     if (sessoes.length > 1) {
       const novasSessoes = sessoes.filter((_, i) => i !== index);
       setSessoes(novasSessoes);
+      setSessaoErrors((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -106,6 +110,23 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
     try {
       if (!clienteSelecionado) {
         notifyWarn("Selecione um cliente!");
+        return;
+      }
+
+      // Validação campos obrigatórios por sessão (valor e descrição)
+      const newErrors = sessoes.map((s) => ({
+        valor: !s.valor && s.valor !== 0
+          ? "Valor da sessão é obrigatório."
+          : "",
+        descricao: !s.descricao || !s.descricao.trim()
+          ? "Descrição da sessão é obrigatória."
+          : "",
+      }));
+      setSessaoErrors(newErrors);
+
+      const hasFieldErrors = newErrors.some((e) => e.valor || e.descricao);
+      if (hasFieldErrors) {
+        notifyWarn("Preencha o valor e a descrição de todas as sessões.");
         return;
       }
       
@@ -135,6 +156,7 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
       setClienteSelecionado(null);
       setSearch("");
       setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);
+      setSessaoErrors([]);
       
       onClose();
     } catch (error) {
@@ -293,19 +315,33 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
               placeholder="R$ 0,00"
                         value={sessao.valor}
               onChange={(e) => handleChangeSessao(index, "valor", e.target.value)}
-              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50"
+              className={`w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50 ${
+                sessaoErrors[index]?.valor ? "border-red-600" : ""
+              }`}
                       />
+            {sessaoErrors[index]?.valor && (
+              <p className="mt-1 text-xs text-red-500">
+                {sessaoErrors[index].valor}
+              </p>
+            )}
                     </div>
           <div className="flex-1">
             <label className="text-white text-sm mb-1 block">Descrição da Sessão</label>
-                      <input 
-                        type="text" 
+            <input 
+              type="text" 
               placeholder="Descrição"
-                        value={sessao.descricao}
+              value={sessao.descricao}
               onChange={(e) => handleChangeSessao(index, "descricao", e.target.value)}
-              className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50"
-                      />
-                    </div>
+              className={`w-full p-2 rounded bg-neutral-900 border border-neutral-700 text-white placeholder:text-gray-500 placeholder:opacity-50 ${
+                sessaoErrors[index]?.descricao ? "border-red-600" : ""
+              }`}
+            />
+            {sessaoErrors[index]?.descricao && (
+              <p className="mt-1 text-xs text-red-500">
+                {sessaoErrors[index].descricao}
+              </p>
+            )}
+          </div>
                   </div>
                 </div>
               ))}
