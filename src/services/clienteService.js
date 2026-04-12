@@ -39,6 +39,31 @@ export const criarCliente = async (dadosCliente) => {
   }
 };
 
+/** Tatuador: consulta se existe usuário (app cliente) com o CPF. */
+export const lookupClienteAppPorCpf = async (cpfInput) => {
+  const c = cpfDigitos(cpfInput);
+  if (!c || c.length !== 11) {
+    throw new Error("CPF inválido");
+  }
+  try {
+    return await api.get(`/api/client/lookup-app-user?cpf=${encodeURIComponent(c)}`);
+  } catch (error) {
+    const msg = error?.data?.error || error?.message || "Falha ao buscar CPF";
+    throw new Error(msg);
+  }
+};
+
+/** Tatuador: cria ficha na agenda a partir do cadastro do app. */
+export const vincularClienteDoAppPorCpf = async (cpfInput) => {
+  const c = cpfDigitos(cpfInput);
+  try {
+    return await api.post("/api/client/link-from-app-user", { cpf: c });
+  } catch (error) {
+    const msg = error?.data?.error || error?.message || "Falha ao vincular cliente";
+    throw new Error(msg);
+  }
+};
+
 /**
  * Atualiza um cliente existente
  * @param {Object} clienteAtualizado - Dados do cliente

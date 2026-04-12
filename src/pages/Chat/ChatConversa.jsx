@@ -28,7 +28,12 @@ function bubbleTime(iso) {
 export default function ChatConversa() {
   const { peerAppUserId: peerParam } = useParams();
   const { token } = useAuth();
-  const { threads = [], reloadThreads } = useOutletContext() || {};
+  const {
+    threads = [],
+    reloadThreads,
+    openAdicionarClienteModal,
+    podeAdicionarCliente = false,
+  } = useOutletContext() || {};
   const peerAppUserId = Number.parseInt(String(peerParam || ""), 10);
 
   const threadMeta = threads.find((r) => Number(r.peer_app_user_id) === peerAppUserId);
@@ -145,10 +150,19 @@ export default function ChatConversa() {
         <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-lg border border-gray-700">
           💬
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-white font-semibold truncate">{peerDisplayName}</h2>
           <p className="text-xs text-gray-500">Chat TattooAli</p>
         </div>
+        {podeAdicionarCliente && typeof openAdicionarClienteModal === "function" ? (
+          <button
+            type="button"
+            onClick={() => openAdicionarClienteModal()}
+            className="shrink-0 text-xs sm:text-sm font-semibold text-white bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg px-3 py-2 transition-colors shadow-md shadow-red-900/30"
+          >
+            Adicionar cliente
+          </button>
+        ) : null}
       </div>
 
       {error && (

@@ -3,6 +3,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import Layout from "../../baselayout/Layout";
 import { useAuth } from "../../auth/useAuth";
 import { loadAuth } from "../../auth/auth-storage";
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
+import { criarCliente } from "../../services/clienteService";
 import {
   fetchChatThreads,
   isSupabaseConfigured,
@@ -23,10 +25,17 @@ function formatWhen(iso) {
 }
 
 export default function ChatLayout() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [modalClienteOpen, setModalClienteOpen] = useState(false);
+
+  const authStored = loadAuth();
+  const effectiveUser = user || authStored?.user;
+  /** Login só devolvia token; sem /me, role vinha vazio. Tratar ausência de user no web gestor como tatuador. */
+  const roleLower = String(effectiveUser?.role ?? "").toLowerCase();
+  const podeAdicionarCliente = roleLower !== "cliente";
 
   const load = useCallback(async () => {
     const auth = loadAuth();
@@ -75,8 +84,8 @@ export default function ChatLayout() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-8">
-        <div className="sticky top-0 z-10 bg-[#0a0a0a]/95 backdrop-blur-sm pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:bg-transparent sm:backdrop-blur-none">
+      <div className="flex flex-col w-full min-h-0 h-[calc(100dvh-7rem)] min-h-[480px]">
+        <div className="shrink-0 pb-4">
           <div className="flex items-center gap-3">
             <MessageCircle className="w-8 h-8 text-red-600 shrink-0" />
             <div>
@@ -87,13 +96,13 @@ export default function ChatLayout() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg border border-red-900/50 bg-red-950/30 text-red-300 text-sm">
+          <div className="shrink-0 mb-3 p-3 rounded-lg border border-red-900/50 bg-red-950/30 text-red-300 text-sm">
             {error}
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row h-[calc(100vh-220px)] min-h-[420px] rounded-2xl border border-gray-700 bg-[#111111] overflow-hidden shadow-xl">
-          <aside className="w-full md:w-[min(100%,320px)] md:shrink-0 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col bg-[#0d0d0d] max-h-[38vh] md:max-h-none">
+        <div className="flex flex-1 flex-col md:flex-row min-h-0 rounded-2xl border border-gray-700 bg-[#111111] overflow-hidden shadow-xl">
+          <aside className="w-full md:w-[min(100%,320px)] md:shrink-0 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col bg-[#0d0d0d] max-h-[min(38vh,280px)] md:max-h-none min-h-0">
             <div className="px-3 py-2.5 border-b border-gray-800 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Conversas
             </div>
@@ -150,7 +159,7 @@ export default function ChatLayout() {
             <div className="p-3 border-t border-gray-800">
               <NavLink
                 to="/clientes"
-                className="text-sm text-red-500 hover:text-red-400 hover:underline"
+                className="inline-block text-sm text-red-500 hover:text-red-400 hover:underline"
               >
                 ← Voltar para Clientes
               </NavLink>
@@ -158,8 +167,24 @@ export default function ChatLayout() {
           </aside>
 
           <section className="flex-1 flex flex-col min-w-0 min-h-0 bg-[#0a0a0a]">
-            <Outlet context={{ threads, reloadThreads: load }} />
+            <Outlet
+              context={{
+                threads,
+                reloadThreads: load,
+                openAdicionarClienteModal: () => setModalClienteOpen(true),
+                podeAdicionarCliente,
+              }}
+            />
           </section>
+
+          <ModalCadastrarCliente
+            isOpen={modalClienteOpen}
+            onClose={() => setModalClienteOpen(false)}
+            defaultClienteJaNoApp
+            onSave={async (novoCliente) => {
+              await criarCliente(novoCliente);
+            }}
+          />
         </div>
       </div>
 
