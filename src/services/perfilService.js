@@ -15,9 +15,34 @@ export async function buscarPerfilTatuador() {
 }
 
 /**
+ * Avaliações recebidas pelo tatuador (média no front a partir da lista).
+ * ROTA: GET /api/tatuador/:user_id/reviews
+ */
+export async function buscarReviewsDoTatuador(userId) {
+  const id = Number(userId);
+  if (!Number.isFinite(id) || id < 1) {
+    throw new Error("user_id inválido");
+  }
+  return api.get(`/api/tatuador/${id}/reviews`);
+}
+
+/**
  * ROTA: GET /api/style
  * Busca todos os estilos de tatuagem disponíveis.
  */
+/**
+ * ROTA: GET /api/bairro
+ * Lista bairros (cadastro pode chamar sem token).
+ */
+export async function buscarBairros() {
+  try {
+    return await api.get("/api/bairro");
+  } catch (error) {
+    console.error("Erro em buscarBairros:", error);
+    throw error;
+  }
+}
+
 export async function buscarTodosEstilos() {
   try {
     const estilos = await api.get('/api/style');

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 // ✅ 1. Importe notifySuccess, notifyError E notifyWarn
 import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService"; // Ajuste o caminho se necessário
+import { cpfDigitos, cpfFormatoBasicoValido } from "../utils/cpf";
 
 const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState(''); // Mudado de 'contato' para 'telefone' para consistência
   const [endereco, setEndereco] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -13,6 +15,7 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
   useEffect(() => {
     if (isOpen) {
       setNome('');
+      setCpf('');
       setTelefone('');
       setEndereco('');
       setObservacoes('');
@@ -22,16 +25,32 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
 
   const handleSave = async () => {
     // ✅ 2. VALIDAÇÃO ATUALIZADA com notifyWarn
-    if (!nome.trim() || !telefone.trim()) {
-      // alert("Por favor, preencha todos os campos obrigatórios (Nome e Contato)."); // <-- REMOVIDO
-      notifyWarn("Por favor, preencha todos os campos obrigatórios (Nome e Contato)."); // <-- ADICIONADO
+    const nomeTrim = nome.trim();
+    const foneDigitos = telefone.replace(/\D/g, '');
+
+    if (!nomeTrim || !foneDigitos) {
+      notifyWarn("Preencha nome e telefone (com DDD).");
+      return;
+    }
+    if (nomeTrim.length < 5) {
+      notifyWarn("O nome deve ter pelo menos 5 caracteres.");
+      return;
+    }
+    if (foneDigitos.length < 10) {
+      notifyWarn("Informe um telefone válido com DDD (ex.: (11) 98765-4321).");
+      return;
+    }
+
+    const cpfLimpo = cpfDigitos(cpf);
+    if (!cpfFormatoBasicoValido(cpfLimpo)) {
+      notifyWarn("Informe um CPF válido com 11 dígitos.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const novoCliente = { nome, telefone, endereco, observacoes };
+      const novoCliente = { nome: nomeTrim, cpf: cpfLimpo, telefone, endereco, observacoes };
       
       if (onSave) {
         await onSave(novoCliente); // Chama a função onSave (que deve ser uma Promise)
@@ -77,6 +96,19 @@ const ModalCadastrarCliente = ({ isOpen, onClose, onSave }) => {
               className="input-field w-full px-4 py-3 rounded-lg"
               placeholder="Nome completo do cliente"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">CPF</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              className="input-field w-full px-4 py-3 rounded-lg"
+              placeholder="000.000.000-00"
+            />
+            <p className="text-xs text-gray-500 mt-1">Usado para identificar a mesma pessoa no app e na agenda.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-white mb-2">Contato (Telefone/WhatsApp)</label>

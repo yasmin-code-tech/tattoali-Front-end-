@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
+import { buscarBairros } from "../../services/perfilService";
+import BairroCombobox from "../../components/BairroCombobox";
 
 export default function Cadastro() {
   const { register } = useAuth();
@@ -14,7 +16,9 @@ export default function Cadastro() {
     confirmarSenha: "",
     documento: "",
     dataNascimento: "",
+    bairro_id: "",
   });
+  const [bairros, setBairros] = useState([]);
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
@@ -97,6 +101,22 @@ export default function Cadastro() {
   }, [form.senha]);
 
   const passwordStrengthLabel = ["Muito fraca", "Fraca", "Ok", "Boa", "Forte", "Excelente"][passwordScore] || "";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await buscarBairros();
+        const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+        if (!cancelled) setBairros(list.filter((b) => b?.id != null && b?.nome));
+      } catch (e) {
+        console.warn("Não foi possível carregar bairros para o cadastro.", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -201,6 +221,7 @@ export default function Cadastro() {
         email: form.email,
         password: form.senha,
         telefone: onlyDigits(form.contato) || undefined,
+        bairro_id: form.bairro_id || undefined,
       });
 
       setSuccess("Cadastro realizado com sucesso! Redirecionando para o login…");
@@ -353,6 +374,18 @@ export default function Cadastro() {
                 <p className="mt-1 text-sm text-red-500">{errors.contato}</p>
               )}
             </div>
+
+            <BairroCombobox
+              options={bairros}
+              valueId={form.bairro_id}
+              onChangeId={(id) =>
+                setForm((p) => ({ ...p, bairro_id: id }))
+              }
+              label="Bairro do estúdio (opcional)"
+              labelClassName="block text-left text-sm font-medium text-white mb-2"
+              hint="Ajuda na busca por região no app do cliente. Digite para filtrar (ordem A–Z)."
+              placeholder="Digite para buscar o bairro…"
+            />
 
             <div>
               <label className="block text-left text-sm font-medium text-white mb-2">

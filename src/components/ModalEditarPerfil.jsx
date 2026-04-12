@@ -1,15 +1,31 @@
 import { useState, useEffect, useRef } from "react";
-import { atualizarDadosPerfil, atualizarFotoPerfil, buscarTodosEstilos } from "../services/perfilService";
-import { notifySuccess, notifyError } from "../services/notificationService"; 
+import { atualizarDadosPerfil, atualizarFotoPerfil, buscarTodosEstilos, buscarBairros } from "../services/perfilService";
+import { notifySuccess, notifyError } from "../services/notificationService";
+import BairroCombobox from "./BairroCombobox"; 
 
 const FALLBACK_STYLES = [
   "Realismo", "Tribal", "Floral", "Blackwork", "Aquarela", "Neotrad", "Old School", "Pontilhismo", "Geométrico", "Japonês", "Lettering", "Maori", "Biomecânico"
 ];
 
+function normalizeStylesFromApi(raw) {
+  if (raw == null) return [];
+  const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+  return arr
+    .map((s) => {
+      if (typeof s === "string") return { id: s, nome: s };
+      const nome = s?.nome ?? s?.name;
+      if (!nome) return null;
+      const id = s.id != null ? s.id : nome;
+      return { id, nome };
+    })
+    .filter(Boolean);
+}
+
 export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSuccess }) {
   const [formData, setFormData] = useState({});
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [allApiStyles, setAllApiStyles] = useState([]);
+  const [bairros, setBairros] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
   const fileInputRef = useRef(null);
@@ -19,8 +35,22 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
   useEffect(() => {
     const loadData = async () => {
         try {
-            const stylesFromApi = await buscarTodosEstilos();
-            setAllApiStyles(stylesFromApi);
+            const [stylesFromApi, bairrosRaw] = await Promise.all([
+              buscarTodosEstilos(),
+              buscarBairros().catch(() => []),
+            ]);
+            const normalized = normalizeStylesFromApi(stylesFromApi);
+            setAllApiStyles(
+              normalized.length > 0
+                ? normalized
+                : FALLBACK_STYLES.map((s) => ({ id: s, nome: s }))
+            );
+            const blist = Array.isArray(bairrosRaw)
+              ? bairrosRaw
+              : Array.isArray(bairrosRaw?.data)
+                ? bairrosRaw.data
+                : [];
+            setBairros(blist.filter((b) => b?.id != null && b?.nome));
         } catch (error) {
             console.error("Não foi possível carregar os estilos da API, usando fallback.", error);
             setAllApiStyles(FALLBACK_STYLES.map(s => ({ id: s, nome: s })));
@@ -38,6 +68,10 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
           email: perfilAtual.email || '',
           endereco: perfilAtual.endereco || '',
           instagram: perfilAtual.instagram || '',
+          bairro_id:
+            perfilAtual.bairro_id != null && perfilAtual.bairro_id !== ''
+              ? String(perfilAtual.bairro_id)
+              : '',
         });
         setSelectedStyles(perfilAtual.Styles?.map(s => s.nome) || []);
         setImagePreview(perfilAtual.foto || null);
@@ -83,9 +117,14 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
           return styleObj ? styleObj.id : null;
       }).filter(id => id !== null); 
 
+      const { bairro_id: bairroIdRaw, ...restForm } = formData;
+      const bairro_id =
+        bairroIdRaw === '' || bairroIdRaw == null ? null : Number(bairroIdRaw);
+
       const payloadTexto = {
-        ...formData,
-        especialidades: estiloIds, 
+        ...restForm,
+        bairro_id,
+        especialidades: estiloIds,
       };
 
       updatePromises.push(atualizarDadosPerfil(payloadTexto));
@@ -162,6 +201,15 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
                 <label className="block text-sm font-medium text-white mb-2">Endereço do Estúdio</label>
                 <input type="text" name="endereco" value={formData.endereco || ''} onChange={handleChange} className="input-field w-full px-4 py-3 rounded-lg" placeholder="Rua, número, cidade..."/>
               </div>
+              <BairroCombobox
+                options={bairros}
+                valueId={formData.bairro_id ?? ""}
+                onChangeId={(id) =>
+                  setFormData((p) => ({ ...p, bairro_id: id }))
+                }
+                label="Bairro (busca no app)"
+                placeholder="Digite para buscar (ordem A–Z)…"
+              />
             </div>
             <div className="space-y-6">
               <div>
@@ -184,14 +232,18 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
             <div className="mb-4 p-4 border border-gray-700 rounded-lg">
                 <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Clique para adicionar</h4>
                 <div className="flex flex-wrap gap-2">
-                    {allApiStyles.map((style) => (
-                        !selectedStyles.includes(style.nome) && (
-                            <button key={style.id} type="button" onClick={() => handleToggleStyle(style.nome)}
-                                className="bg-gray-700 text-gray-300 hover:bg-gray-600 px-3 py-1 rounded-full text-sm transition-colors">
+                    {allApiStyles
+                      .filter((style) => style.nome && !selectedStyles.includes(style.nome))
+                      .map((style) => (
+                            <button
+                              key={`${style.id}-${style.nome}`}
+                              type="button"
+                              onClick={() => handleToggleStyle(style.nome)}
+                              className="bg-gray-700 text-gray-300 hover:bg-gray-600 px-3 py-1 rounded-full text-sm transition-colors cursor-pointer"
+                            >
                                 + {style.nome}
                             </button>
-                        )
-                    ))}
+                      ))}
                 </div>
             </div>
 
@@ -201,7 +253,18 @@ export default function ModalEditarPerfil({ isOpen, onClose, perfilAtual, onSucc
                     {selectedStyles.length > 0 ? selectedStyles.map((styleName) => (
                         <span key={styleName} className="specialty-tag">
                             {styleName}
-                            <span className="remove-tag" onClick={() => handleToggleStyle(styleName)}>×</span>
+                            <button
+                              type="button"
+                              className="remove-tag"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleToggleStyle(styleName);
+                              }}
+                              aria-label={`Remover ${styleName}`}
+                            >
+                              ×
+                            </button>
                         </span>
                     )) : (
                         <p className="text-sm text-gray-500 p-2">Nenhum estilo selecionado.</p>

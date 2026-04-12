@@ -63,16 +63,18 @@ export default function AuthProvider({ children }) {
     }
   }
 
-  // REGISTER via lib/api
-  async function register({ nome, sobrenome, cpf, email, password, telefone }) {
+  // REGISTER via lib/api — web só cadastra tatuador; mobile usa "cliente"
+  async function register({ nome, sobrenome, cpf, email, password, telefone, bairro_id }) {
     try {
       const body = {
         nome,
         sobrenome,
         cpf,
         email,
-        senha: password,              
+        senha: password,
+        role: "tatuador",
         ...(telefone ? { telefone } : {}),
+        ...(bairro_id != null && bairro_id !== "" ? { bairro_id: Number(bairro_id) } : {}),
       };
 
       const res = await api.post("/api/user/register", body);

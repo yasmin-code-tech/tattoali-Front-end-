@@ -12,6 +12,7 @@
     "dev:real": "cross-env VITE_USE_MOCK_AUTH=false VITE_API_URL=http://localhost:3000 vite"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.0",
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.543.0",
