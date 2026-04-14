@@ -42,7 +42,6 @@ export async function apiFetch(path, options = {}) {
     console.log('Token adicionado ao header:', auth.token);
   }
 
-
   // Para FormData, cria headers apenas com Authorization (sem Content-Type)
   // O navegador define automaticamente o Content-Type com boundary
   const finalHeaders = isFormData 
@@ -282,9 +281,9 @@ async function mockApiFetch(path, options = {}) {
       throw err;
     }
     return [
-      { client_id: 1, nome: "João Silva", telefone: "(11) 99999-1111", descricao: "Cliente VIP" },
-      { client_id: 2, nome: "Maria Souza", telefone: "(11) 88888-2222", descricao: "Prefere manhã" },
-      { client_id: 3, nome: "Carlos Oliveira", telefone: "(11) 77777-3333", descricao: "Primeira tatuagem" }
+      { client_id: 1, nome: "João Silva", telefone: "(11) 99999-1111", cpf: "52998224725", descricao: "Cliente VIP" },
+      { client_id: 2, nome: "Maria Souza", telefone: "(11) 88888-2222", cpf: "11144477735", descricao: "Prefere manhã" },
+      { client_id: 3, nome: "Carlos Oliveira", telefone: "(11) 77777-3333", cpf: "39053344705", descricao: "Primeira tatuagem" },
     ];
   }
 

@@ -13,12 +13,24 @@ export default function AuthProvider({ children }) {
   const [isBooting, setIsBooting] = useState(true);
   const navigate = useNavigate();
 
-  // Hidrata sessão ao iniciar o app
+  // Hidrata sessão ao iniciar o app; se só existir token (login antigo), busca /me para ter role, nome, etc.
   useEffect(() => {
-    const auth = loadAuth(); 
+    const auth = loadAuth();
     if (auth?.token) {
       setToken(auth.token);
       setUser(auth.user || null);
+      if (!auth.user) {
+        api
+          .get("/api/user/me")
+          .then((me) => {
+            const cur = loadAuth();
+            if (cur?.token) {
+              saveAuth({ ...cur, user: me });
+              setUser(me);
+            }
+          })
+          .catch(() => {});
+      }
     }
     setIsBooting(false);
   }, []);
@@ -41,15 +53,26 @@ export default function AuthProvider({ children }) {
         throw new Error("Token não retornado pelo servidor.");
       }
 
-      const authToSave = {
+      setToken(jwt);
+      saveAuth({
         token: jwt,
         refreshToken: data?.refreshToken,
-        user: data?.user || null, // Removido fallback hardcoded - se não tem user, é null
-      };
-      saveAuth(authToSave);
+        user: data?.user || null,
+      });
 
-      setToken(jwt);
-      setUser(authToSave.user);
+      try {
+        const me = await api.get("/api/user/me");
+        const next = {
+          token: jwt,
+          refreshToken: data?.refreshToken,
+          user: me,
+        };
+        saveAuth(next);
+        setUser(me);
+      } catch {
+        setUser(data?.user || null);
+      }
+
       navigate("/agenda", { replace: true });
     } catch (err) {
       clearAuth()
@@ -63,16 +86,18 @@ export default function AuthProvider({ children }) {
     }
   }
 
-  // REGISTER via lib/api
-  async function register({ nome, sobrenome, cpf, email, password, telefone }) {
+  // REGISTER via lib/api — web só cadastra tatuador; mobile usa "cliente"
+  async function register({ nome, sobrenome, cpf, email, password, telefone, bairro_id }) {
     try {
       const body = {
         nome,
         sobrenome,
         cpf,
         email,
-        senha: password,              
+        senha: password,
+        role: "tatuador",
         ...(telefone ? { telefone } : {}),
+        ...(bairro_id != null && bairro_id !== "" ? { bairro_id: Number(bairro_id) } : {}),
       };
 
       const res = await api.post("/api/user/register", body);

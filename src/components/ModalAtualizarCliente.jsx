@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 import { atualizarCliente } from "../services/clienteService";
+import { cpfDigitos, cpfFormatoBasicoValido } from "../utils/cpf";
 
 const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
   const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
   const [contato, setContato] = useState('');
   const [endereco, setEndereco] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -12,6 +14,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
   useEffect(() => {
     if (cliente) {
       setNome(cliente.nome || '');
+      setCpf(cliente.cpf ? cpfDigitos(cliente.cpf) : '');
       setContato(cliente.contato || cliente.telefone || '');
       setEndereco(cliente.endereco || '');
       setObservacoes(cliente.observacoes || cliente.descricao || '');
@@ -36,9 +39,17 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
         return;
       }
 
+      const cpfLimpo = cpfDigitos(cpf);
+      if (!cpfFormatoBasicoValido(cpfLimpo)) {
+        notifyWarn("Informe um CPF válido com 11 dígitos.");
+        setLoading(false);
+        return;
+      }
+
       const clienteAtualizado = { 
         id: cliente.id || cliente.client_id,
         nome,
+        cpf: cpfLimpo,
         contato,
         endereco,
         observacoes,
@@ -56,7 +67,7 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
       onClose();
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
-      notifyError("Erro ao atualizar cliente. Tente novamente.");
+      notifyError(error?.message || "Erro ao atualizar cliente. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -90,6 +101,19 @@ const ModalAtualizarCliente = ({ isOpen, onClose, onSuccess, cliente }) => {
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Digite o nome do cliente"
+              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-400 mb-1">CPF</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              placeholder="000.000.000-00"
               className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
               disabled={loading}
             />

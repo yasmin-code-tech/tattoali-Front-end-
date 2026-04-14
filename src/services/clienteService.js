@@ -1,4 +1,5 @@
 import { api } from "../lib/api";
+import { cpfDigitos } from "../utils/cpf";
 
 /**
  * Cria um novo cliente
@@ -12,11 +13,15 @@ export const criarCliente = async (dadosCliente) => {
   try {
     console.log('Criando novo cliente:', dadosCliente);
 
+    const rawFone = dadosCliente.telefone || dadosCliente.contato || '';
+    const telefoneDigitos = String(rawFone).replace(/\D/g, '');
+
     const dadosBackend = {
-      nome: dadosCliente.nome,
-      telefone: dadosCliente.telefone || dadosCliente.contato,
-      descricao: dadosCliente.descricao || dadosCliente.observacoes,
-      endereco: dadosCliente.endereco || ''
+      nome: (dadosCliente.nome || '').trim(),
+      telefone: telefoneDigitos,
+      cpf: cpfDigitos(dadosCliente.cpf),
+      descricao: dadosCliente.descricao || dadosCliente.observacoes || '',
+      endereco: dadosCliente.endereco || '',
     };
 
     console.log('Dados para o backend:', dadosBackend);
@@ -26,7 +31,36 @@ export const criarCliente = async (dadosCliente) => {
     return response;
   } catch (error) {
     console.error('Erro ao criar cliente:', error);
-    throw new Error('Falha ao cadastrar cliente');
+    const msg =
+      error?.data?.error ||
+      error?.message ||
+      'Falha ao cadastrar cliente';
+    throw new Error(msg);
+  }
+};
+
+/** Tatuador: consulta se existe usuário (app cliente) com o CPF. */
+export const lookupClienteAppPorCpf = async (cpfInput) => {
+  const c = cpfDigitos(cpfInput);
+  if (!c || c.length !== 11) {
+    throw new Error("CPF inválido");
+  }
+  try {
+    return await api.get(`/api/client/lookup-app-user?cpf=${encodeURIComponent(c)}`);
+  } catch (error) {
+    const msg = error?.data?.error || error?.message || "Falha ao buscar CPF";
+    throw new Error(msg);
+  }
+};
+
+/** Tatuador: cria ficha na agenda a partir do cadastro do app. */
+export const vincularClienteDoAppPorCpf = async (cpfInput) => {
+  const c = cpfDigitos(cpfInput);
+  try {
+    return await api.post("/api/client/link-from-app-user", { cpf: c });
+  } catch (error) {
+    const msg = error?.data?.error || error?.message || "Falha ao vincular cliente";
+    throw new Error(msg);
   }
 };
 
@@ -43,19 +77,25 @@ export const criarCliente = async (dadosCliente) => {
  */
 export const atualizarCliente = async (clienteAtualizado) => {
   try {
+    const fone = String(clienteAtualizado.contato ?? clienteAtualizado.telefone ?? '').replace(/\D/g, '');
     const dadosBackend = {
       nome: clienteAtualizado.nome,
-      telefone: clienteAtualizado.contato,
+      telefone: fone,
       descricao: clienteAtualizado.observacoes || '',
-      endereco: clienteAtualizado.endereco || ''
+      endereco: clienteAtualizado.endereco || '',
     };
+    if (clienteAtualizado.cpf != null && String(clienteAtualizado.cpf).replace(/\D/g, '').length > 0) {
+      dadosBackend.cpf = cpfDigitos(clienteAtualizado.cpf);
+    }
 
     const response = await api.put(`/api/client/${clienteAtualizado.id}`, dadosBackend);
     console.log('Cliente atualizado com sucesso:', response);
     return response;
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
-    throw new Error('Falha ao atualizar cliente');
+    const msg =
+      error?.data?.error || error?.message || 'Falha ao atualizar cliente';
+    throw new Error(msg);
   }
 };
 

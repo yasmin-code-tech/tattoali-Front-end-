@@ -14,12 +14,17 @@ import Clientes from "./pages/Clientes/Clientes";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import GeradorImagem from "./pages/GeradorImagem/GeradorImagem";
 import Galeria from "./pages/Galeria/Galeria";
-import Home from "./pages/Home"; 
+import Home from "./pages/Home";
+import ChatProfileSync from "./components/ChatProfileSync";
+import ChatLayout from "./pages/Chat/ChatLayout";
+import ChatIndex from "./pages/Chat/ChatIndex";
+import ChatConversa from "./pages/Chat/ChatConversa";
 
 export default function App() {
   return (
     <Router>
       <AuthProvider>
+        <ChatProfileSync />
         <Routes>
 
           {/* públicas */}
@@ -57,6 +62,10 @@ export default function App() {
             <Route path="/gerador-imagem" element={<GeradorImagem />} />
             <Route path="/dashboard" element={<Dashboard />} /> 
             <Route path="/galeria" element={<Galeria />}/>
+            <Route path="/chat" element={<ChatLayout />}>
+              <Route index element={<ChatIndex />} />
+              <Route path=":peerAppUserId" element={<ChatConversa />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

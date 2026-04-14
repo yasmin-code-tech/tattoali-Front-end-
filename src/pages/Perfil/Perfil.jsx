@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom"; // ✅ Import do Link
 import Layout from '../../baselayout/Layout';
-import { buscarPerfilTatuador } from '../../services/perfilService';
+import { buscarPerfilTatuador, buscarReviewsDoTatuador } from '../../services/perfilService';
 
 import ModalEditarPerfil from "../../components/ModalEditarPerfil";
+import AvaliacaoResumoTatuador from "../../components/AvaliacaoResumoTatuador";
 import ModalAlterarSenha from "../../components/ModalAlterarSenha";
 
 const UserIcon = () => (
@@ -41,6 +42,8 @@ export default function Perfil() {
   const [erro, setErro] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   const carregarPerfil = async () => {
     try {
@@ -58,6 +61,31 @@ export default function Perfil() {
   useEffect(() => {
     carregarPerfil();
   }, []);
+
+  useEffect(() => {
+    const userId = perfil?.user_id;
+    if (userId == null) {
+      setReviews([]);
+      setReviewsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setReviewsLoading(true);
+    (async () => {
+      try {
+        const list = await buscarReviewsDoTatuador(userId);
+        if (!cancelled) setReviews(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setReviews([]);
+      } finally {
+        if (!cancelled) setReviewsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfil?.user_id]);
 
   const handleProfileUpdateSuccess = () => {
     carregarPerfil();
@@ -103,9 +131,21 @@ export default function Perfil() {
               <div className="text-center mb-2">
                 <h2 className="text-2xl font-bold text-white">{perfil.nome}</h2>
               </div>
-              <p className="text-gray-400 mb-4">{perfil.bio}</p>
+              <h3 className="red-title text-sm font-semibold text-center mb-1">
+                Avaliações
+              </h3>
+              <AvaliacaoResumoTatuador reviews={reviews} loading={reviewsLoading} />
+              <p className="text-gray-400 mb-4 mt-4">{perfil.bio}</p>
               
               <div className="mt-4 space-y-2">
+                {(perfil.Bairro?.nome || perfil.bairro_id) && (
+                  <div className="flex items-center justify-center text-sm text-gray-400">
+                    <MapPinIcon />
+                    <span className="ml-2">
+                      {perfil.Bairro?.nome ? `Bairro: ${perfil.Bairro.nome}` : `Bairro #${perfil.bairro_id}`}
+                    </span>
+                  </div>
+                )}
                 {perfil.endereco && (
                   <div className="flex items-center justify-center text-sm text-gray-400">
                     <MapPinIcon />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, User, Calendar, Image, LayoutDashboard, Users, LogOut, Camera, Home } from "lucide-react";
+import { Menu, User, Calendar, Image, LayoutDashboard, Users, LogOut, Camera, Home, MessageCircle } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 
 
@@ -103,6 +103,14 @@ export default function Sidebar() {
             onClick={handleLinkClick}
           >
             <Users className="w-5 h-5 mr-3" /> Clientes
+          </NavLink>
+
+          <NavLink
+            to="/chat"
+            className={getNavLinkClass}
+            onClick={handleLinkClick}
+          >
+            <MessageCircle className="w-5 h-5 mr-3" /> Mensagens
           </NavLink>
 
           <NavLink 

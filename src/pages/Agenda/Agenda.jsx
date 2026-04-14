@@ -141,6 +141,7 @@ export default function Agenda() {
         id: sessao.cliente_id,
         nome: sessao.cliente?.nome || 'Cliente não encontrado',
         contato: sessao.cliente?.telefone || 'Contato não informado',
+        cpf: sessao.cliente?.cpf,
         endereco: sessao.cliente?.endereco || 'Endereço não informado',
         observacoes: sessao.cliente?.observacoes || sessao.cliente?.descricao || 'Observações não informadas',
         sessoes: sessoesRealizadas.map(s => ({ data: s.data_atendimento, numeroSessao: s.numero_sessao, descricao: s.descricao, valor: s.valor_sessao || '0' })),
@@ -185,10 +186,9 @@ export default function Agenda() {
           console.error('Erro ao criar cliente:', error);
           setErro(errorMessage);
           notifyError(errorMessage);
-          
-          // Garante que o campo de busca permaneça vazio mesmo em caso de erro
           setValorBusca('');
           setSessoes([]);
+          throw error;
         }
       }
       else if (dados.sessoes && Array.isArray(dados.sessoes)) {
@@ -641,10 +641,9 @@ export default function Agenda() {
                 console.error('Erro ao criar cliente:', error);
                 setErro(errorMessage);
                 notifyError(errorMessage);
-                
-                // Garante que o campo de busca permaneça vazio mesmo em caso de erro
                 setValorBusca('');
                 setSessoes([]);
+                throw error;
               }
             }} 
           />

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Layout from '../../baselayout/Layout';
 import { FiUser, FiPlus, FiArrowDown, FiArrowUp, FiTrash2 } from "react-icons/fi";
 
+import { useAuth } from "../../auth/useAuth";
+import { buscarPerfilTatuador } from "../../services/perfilService";
 import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
 import ModalDetalhesCliente from "../../components/ModalDetalhesCliente";
@@ -9,8 +11,23 @@ import ModalConfirmarExclusaoCliente from "../../components/ModalConfirmarExclus
 import { buscarSessoesRealizadasCliente, buscarSessoesPendentesCliente, buscarSessoesCanceladasCliente } from '../../services/agendaService';
 import { buscarClientes, criarCliente, deletarCliente } from '../../services/clienteService';
 import { notifySuccess, notifyError } from '../../services/notificationService';
+import { useNavigate } from "react-router-dom";
+import { isSupabaseConfigured } from "../../lib/chatService";
 
-const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAtualizar, onVerDetalhes, onExcluir }) => {
+const ClienteCard = ({
+  id,
+  nome,
+  contato,
+  cpf,
+  descricao,
+  endereco,
+  observacoes,
+  userId,
+  onAtualizar,
+  onVerDetalhes,
+  onExcluir,
+}) => {
+  const navigate = useNavigate();
   const handleExcluirClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -39,16 +56,30 @@ const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAt
     <p className="text-gray-400 text-sm mb-2">{contato}</p>
     <p className="text-gray-300 mb-4">{descricao}</p>
 
-    <div className="flex justify-between items-center">
+    <div className="flex flex-wrap gap-2 justify-between items-center">
       <button
-        onClick={() => onAtualizar({ id, nome, contato, descricao, endereco, observacoes })}
+        onClick={() =>
+          onAtualizar({ id, nome, contato, cpf, descricao, endereco, observacoes })
+        }
         className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Atualizar Cliente
       </button>
 
+      {userId != null && Number(userId) >= 1 && isSupabaseConfigured() ? (
+        <button
+          type="button"
+          onClick={() => navigate(`/chat/${userId}`)}
+          className="border border-gray-600 text-gray-200 hover:border-red-600 hover:text-red-400 transition px-4 py-2 rounded-lg text-sm font-medium"
+        >
+          Mensagens
+        </button>
+      ) : null}
+
       <button
-        onClick={() => onVerDetalhes({ id, nome, contato, descricao, endereco, observacoes })}
+        onClick={() =>
+          onVerDetalhes({ id, nome, contato, cpf, descricao, endereco, observacoes })
+        }
         className="bg-red-600 hover:bg-red-700 text-white transition px-4 py-2 rounded-lg text-sm font-medium"
       >
         Detalhes
@@ -59,9 +90,11 @@ const ClienteCard = ({ id, nome, contato, descricao, endereco, observacoes, onAt
 };
 
 export default function Clientes() {
+  const { user } = useAuth();
   const [clientes, setClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nomeTatuador, setNomeTatuador] = useState("");
 
   const [modalAtualizarOpen, setModalAtualizarOpen] = useState(false);
   const [modalCadastrarOpen, setModalCadastrarOpen] = useState(false);
@@ -108,6 +141,28 @@ export default function Clientes() {
   useEffect(() => {
     carregarClientes();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (user?.nome) {
+        const completo = [user.nome, user.sobrenome].filter(Boolean).join(" ").trim();
+        if (!cancelled) setNomeTatuador(completo || user.nome);
+        return;
+      }
+      try {
+        const perfil = await buscarPerfilTatuador();
+        if (cancelled) return;
+        const completo = [perfil?.nome, perfil?.sobrenome].filter(Boolean).join(" ").trim();
+        setNomeTatuador(completo || perfil?.nome || "");
+      } catch {
+        if (!cancelled) setNomeTatuador("");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const handleBuscarClientes = async () => {
     await carregarClientes();
@@ -239,7 +294,6 @@ export default function Clientes() {
       
       // Mostra mensagem de erro usando o sistema de notificações
       notifyError(errorMessage);
-      throw error; // Re-lança o erro para que o modal possa tratar se necessário
     }
   };
 
@@ -307,9 +361,11 @@ export default function Clientes() {
               id={cliente.id}
               nome={cliente.nome}
               contato={cliente.contato}
+              cpf={cliente.cpf}
               descricao={cliente.descricao}
               endereco={cliente.endereco}
               observacoes={cliente.observacoes}
+              userId={cliente.cliente_app_user_id ?? cliente.clienteAppUserId}
               onAtualizar={handleAbrirModalAtualizar}
               onVerDetalhes={handleAbrirModalDetalhes}
               onExcluir={handleAbrirModalExclusao}
@@ -318,7 +374,9 @@ export default function Clientes() {
         </div>
 
         {!loading && filteredClientes.length === 0 && (
-          <p className="text-gray-400 mt-4">Nenhum cliente encontrado para "{searchTerm}".</p>
+          <p className="text-gray-400 mt-4">
+            {`Nenhum cliente encontrado para ${searchTerm.trim() || nomeTatuador || "você"}.`}
+          </p>
         )}
       </div>
 
@@ -361,7 +419,8 @@ export default function Clientes() {
             // Notificação de sucesso já é exibida pelo ModalCadastrarCliente
           } catch (error) {
             console.error('Erro ao criar cliente:', error);
-            notifyError('Erro ao criar cliente. Tente novamente.');
+            notifyError(error?.message || 'Erro ao criar cliente. Tente novamente.');
+            throw error;
           }
         }}
       />
