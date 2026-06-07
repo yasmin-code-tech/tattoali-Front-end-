@@ -1,3 +1,5 @@
+import { computeReviewSummary } from "../lib/rating";
+
 /**
  * Exibe média em estrelas e quantidade de avaliações (somente leitura; envio fica no app mobile).
  */
@@ -19,13 +21,10 @@ export default function AvaliacaoResumoTatuador({ reviews, loading }) {
     );
   }
 
-  const sum = list.reduce((s, r) => s + Number(r.nota), 0);
-  const avg = sum / list.length;
-  const rounded = Math.round(avg * 10) / 10;
-  const filled = Math.min(5, Math.max(0, Math.round(avg)));
+  const { roundedAverage, fullStars, count } = computeReviewSummary(list);
 
-  const label = `Média ${rounded} de 5, ${list.length} ${
-    list.length === 1 ? "avaliação" : "avaliações"
+  const label = `Média ${roundedAverage} de 5, ${count} ${
+    count === 1 ? "avaliação" : "avaliações"
   }`;
 
   return (
@@ -37,14 +36,14 @@ export default function AvaliacaoResumoTatuador({ reviews, loading }) {
       <div className="flex items-center gap-1.5 text-amber-400 text-2xl leading-none">
         {Array.from({ length: 5 }, (_, i) => (
           <span key={i} className="select-none">
-            {i < filled ? "\u2605" : "\u2606"}
+            {i < fullStars ? "\u2605" : "\u2606"}
           </span>
         ))}
       </div>
       <p className="text-white text-base font-medium">
-        {rounded}
+        {roundedAverage}
         <span className="text-gray-400 text-sm font-normal ml-2">
-          ({list.length} {list.length === 1 ? "avaliação" : "avaliações"})
+          ({count} {count === 1 ? "avaliação" : "avaliações"})
         </span>
       </p>
     </div>

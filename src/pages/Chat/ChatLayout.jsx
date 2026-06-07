@@ -1,14 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import Layout from "../../baselayout/Layout";
 import { useAuth } from "../../auth/useAuth";
 import { loadAuth } from "../../auth/auth-storage";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
-import { criarCliente } from "../../services/clienteService";
-import {
-  fetchChatThreads,
-  isSupabaseConfigured,
-} from "../../lib/chatService";
+import ModalMarcarSessao from "../../components/ModalMarcarSessao";
+import { criarCliente, buscarMapaClientesPorAppUserId } from "../../services/clienteService";
+import { adicionarSessao } from "../../services/agendaService";
+import { isSupabaseConfigured } from "../../lib/chatService";
+import { useChatNotifications } from "../../context/ChatNotificationsContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MessageCircle } from "lucide-react";
@@ -25,46 +25,54 @@ function formatWhen(iso) {
 }
 
 export default function ChatLayout() {
-  const { token, user } = useAuth();
-  const [threads, setThreads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user } = useAuth();
+  const {
+    threads,
+    loading,
+    error,
+    reloadThreads,
+    unreadByConversationId,
+    hasUnread,
+  } = useChatNotifications();
   const [modalClienteOpen, setModalClienteOpen] = useState(false);
+  const [modalSessaoOpen, setModalSessaoOpen] = useState(false);
+  const [clienteParaSessao, setClienteParaSessao] = useState(null);
+  const [clientesPorAppUserId, setClientesPorAppUserId] = useState({});
+
+  const hoje = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const authStored = loadAuth();
   const effectiveUser = user || authStored?.user;
-  /** Login só devolvia token; sem /me, role vinha vazio. Tratar ausência de user no web gestor como tatuador. */
   const roleLower = String(effectiveUser?.role ?? "").toLowerCase();
   const podeAdicionarCliente = roleLower !== "cliente";
 
-  const load = useCallback(async () => {
-    const auth = loadAuth();
-    const t = token || auth?.token;
-    if (!t) {
-      setLoading(false);
-      return;
-    }
-    if (!isSupabaseConfigured()) {
-      setError("Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env do front.");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
+  const recarregarClientesMap = useCallback(async () => {
     try {
-      const rows = await fetchChatThreads(t);
-      setThreads(rows);
-    } catch (e) {
-      setError(e?.message || "Não foi possível carregar as conversas.");
-      setThreads([]);
-    } finally {
-      setLoading(false);
+      const map = await buscarMapaClientesPorAppUserId();
+      setClientesPorAppUserId(map);
+    } catch {
+      setClientesPorAppUserId({});
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (podeAdicionarCliente) recarregarClientesMap();
+  }, [podeAdicionarCliente, recarregarClientesMap]);
+
+  const openMarcarSessaoModal = useCallback(
+    (peerAppUserId) => {
+      const id = Number(peerAppUserId);
+      const cliente = clientesPorAppUserId[id];
+      if (!cliente) return;
+      setClienteParaSessao(cliente);
+      setModalSessaoOpen(true);
+    },
+    [clientesPorAppUserId],
+  );
+
+  const handleMarcarSessaoSuccess = async ({ sessoes }) => {
+    await Promise.all(sessoes.map((s) => adicionarSessao(s)));
+  };
 
   if (!isSupabaseConfigured()) {
     return (
@@ -87,7 +95,12 @@ export default function ChatLayout() {
       <div className="flex flex-col w-full min-h-0 h-[calc(100dvh-7rem)] min-h-[480px]">
         <div className="shrink-0 pb-4">
           <div className="flex items-center gap-3">
-            <MessageCircle className="w-8 h-8 text-red-600 shrink-0" />
+            <span className="relative shrink-0">
+              <MessageCircle className="w-8 h-8 text-red-600" />
+              {hasUnread ? (
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-[#0a0a0a]" />
+              ) : null}
+            </span>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white">Mensagens</h1>
               <p className="text-gray-400 text-sm">Conversas com clientes (Supabase)</p>
@@ -107,7 +120,7 @@ export default function ChatLayout() {
               Conversas
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-thin">
-              {loading ? (
+              {loading && threads.filter((row) => row.peer_app_user_id != null).length === 0 ? (
                 <p className="p-4 text-gray-500 text-sm">Carregando…</p>
               ) : threads.filter((row) => row.peer_app_user_id != null).length === 0 ? (
                 <p className="p-4 text-gray-500 text-sm leading-relaxed">
@@ -120,6 +133,8 @@ export default function ChatLayout() {
                     .filter((row) => row.peer_app_user_id != null)
                     .map((row) => {
                       const peerId = row.peer_app_user_id;
+                      const unread = unreadByConversationId[row.conversation_id];
+                      const naLista = Boolean(clientesPorAppUserId[Number(peerId)]);
                       return (
                         <li key={row.conversation_id}>
                           <NavLink
@@ -133,19 +148,33 @@ export default function ChatLayout() {
                               ].join(" ")
                             }
                           >
-                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-lg shrink-0 border border-gray-700">
+                            <div className="relative w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-lg shrink-0 border border-gray-700">
                               💬
+                              {unread ? (
+                                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-[#0d0d0d]" />
+                              ) : null}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex justify-between gap-2">
-                                <span className="font-semibold text-white truncate">
-                                  {row.peer_name || "Usuário"}
-                                </span>
+                              <div className="flex justify-between gap-2 items-start">
+                                <div className="min-w-0 flex-1">
+                                  <span
+                                    className={`block truncate ${unread ? "font-bold text-white" : "font-semibold text-white"}`}
+                                  >
+                                    {row.peer_name || "Usuário"}
+                                  </span>
+                                  {naLista ? (
+                                    <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-400/90 bg-green-950/40 border border-green-900/40 rounded px-1.5 py-0.5">
+                                      Na lista
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <span className="text-[11px] text-gray-500 shrink-0">
                                   {formatWhen(row.last_at)}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-400 truncate mt-0.5">
+                              <p
+                                className={`text-sm truncate mt-0.5 ${unread ? "text-gray-200" : "text-gray-400"}`}
+                              >
                                 {row.last_body || "Sem mensagens"}
                               </p>
                             </div>
@@ -170,8 +199,10 @@ export default function ChatLayout() {
             <Outlet
               context={{
                 threads,
-                reloadThreads: load,
+                reloadThreads,
+                clientesPorAppUserId,
                 openAdicionarClienteModal: () => setModalClienteOpen(true),
+                openMarcarSessaoModal,
                 podeAdicionarCliente,
               }}
             />
@@ -183,7 +214,20 @@ export default function ChatLayout() {
             defaultClienteJaNoApp
             onSave={async (novoCliente) => {
               await criarCliente(novoCliente);
+              await recarregarClientesMap();
             }}
+            onClienteVinculado={recarregarClientesMap}
+          />
+
+          <ModalMarcarSessao
+            isOpen={modalSessaoOpen}
+            onClose={() => {
+              setModalSessaoOpen(false);
+              setClienteParaSessao(null);
+            }}
+            dataSelecionada={hoje}
+            clienteInicial={clienteParaSessao}
+            onSuccess={handleMarcarSessaoSuccess}
           />
         </div>
       </div>

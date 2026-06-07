@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { buscarClientes } from "../services/clienteService";
 import { notifySuccess, notifyError, notifyWarn } from "../services/notificationService";
 
-export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSelecionada }) {
+export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSelecionada, clienteInicial = null }) {
+  const clienteFixo = Boolean(clienteInicial?.client_id || clienteInicial?.id);
   const [search, setSearch] = useState("");
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [clientes, setClientes] = useState([]);
@@ -18,24 +19,23 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
     console.log('ModalMarcarSessao useEffect executado, isOpen:', isOpen);
     if (isOpen) {
       console.log('Modal aberto, resetando seleção e carregando clientes...');
-      setClienteSelecionado(null);
       setSearch("");
       setSessoes([{ data: dataSelecionada || "", numeroSessao: "1", valor: "", descricao: "", horario: "" }]);
       setSessaoErrors([]);
-      setSalvando(false); 
+      setSalvando(false);
       setModalKey(prev => prev + 1);
-      carregarClientes();
+      if (clienteInicial) {
+        setClienteSelecionado(clienteInicial);
+        setClientes([clienteInicial]);
+        setLoadingClientes(false);
+      } else {
+        setClienteSelecionado(null);
+        carregarClientes();
+      }
     } else {
       console.log('Modal fechado');
     }
-  }, [isOpen, dataSelecionada]);
-
-  useEffect(() => {
-    if (clientes.length > 0 && clienteSelecionado !== null) {
-      console.log('Clientes carregados mas há uma seleção prévia, resetando...');
-      setClienteSelecionado(null);
-    }
-  }, [clientes.length]);
+  }, [isOpen, dataSelecionada, clienteInicial]);
 
   const carregarClientes = async () => {
     console.log('Iniciando carregamento de clientes...');
@@ -185,6 +185,18 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
         </div>
 
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          {clienteFixo && clienteSelecionado ? (
+            <div className="rounded-xl border border-green-900/40 bg-green-950/20 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-green-400/90">Cliente</p>
+              <p className="text-white font-medium mt-1">{clienteSelecionado.nome}</p>
+              {clienteSelecionado.telefone || clienteSelecionado.contato ? (
+                <p className="text-gray-400 text-sm mt-0.5">
+                  {clienteSelecionado.telefone || clienteSelecionado.contato}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <>
           {/* Buscar Cliente */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">Buscar Cliente</label>
@@ -247,6 +259,8 @@ export default function ModalMarcarSessao({ isOpen, onClose, onSuccess, dataSele
                   </div>
               )}
           </div>
+            </>
+          )}
 
 
           {/* Sessões */}

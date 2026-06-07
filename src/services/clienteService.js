@@ -128,6 +128,23 @@ export const buscarClientes = async () => {
   }
 };
 
+/** Mapa app user_id (Users) → ficha do cliente na agenda do tatuador. */
+export function mapClientesPorAppUserId(clientes) {
+  const map = {};
+  if (!Array.isArray(clientes)) return map;
+  for (const c of clientes) {
+    const uid = c.cliente_app_user_id ?? c.clienteAppUserId;
+    const n = Number(uid);
+    if (Number.isFinite(n) && n > 0) map[n] = c;
+  }
+  return map;
+}
+
+export async function buscarMapaClientesPorAppUserId() {
+  const list = await buscarClientes();
+  return mapClientesPorAppUserId(list);
+}
+
 /**
  * Busca um cliente por ID
  * @param {string} clienteId - ID do cliente

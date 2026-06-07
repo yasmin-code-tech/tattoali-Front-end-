@@ -41,7 +41,11 @@ const ModalEsqueciSenha = ({ isOpen, onClose }) => {
       setIsSuccess(true);
       setMessage(response.message || 'Instruções para redefinir sua senha foram enviadas para o seu e-mail.');
     } catch (error) {
-      const errorMessage = error?.data?.message || error?.message || 'Erro ao enviar e-mail de recuperação. Tente novamente.';
+      const errorMessage =
+        error?.data?.error ||
+        error?.data?.message ||
+        error?.message ||
+        'Erro ao enviar e-mail de recuperação. Tente novamente.';
       setMessage(errorMessage);
       setIsSuccess(false);
     } finally {

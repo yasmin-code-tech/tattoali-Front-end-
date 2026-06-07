@@ -31,8 +31,12 @@ create table if not exists public.chat_messages (
   conversation_id uuid not null references public.chat_conversations (id) on delete cascade,
   sender_id uuid not null references auth.users (id) on delete cascade,
   body text not null,
+  image_url text,
   created_at timestamptz not null default now(),
-  constraint chat_messages_body_len check (char_length(body) > 0 and char_length(body) <= 5000)
+  constraint chat_messages_body_len check (
+    char_length(body) <= 5000
+    and (char_length(trim(body)) > 0 or image_url is not null)
+  )
 );
 
 create index if not exists chat_messages_conv_created_idx
@@ -191,3 +195,52 @@ grant select, insert on public.chat_messages to authenticated;
 -- Realtime: no painel Supabase → Database → Publications → supabase_realtime → inclua chat_messages
 -- ou (se ainda não estiver na publication):
 -- alter publication supabase_realtime add table public.chat_messages;
+
+-- ---------------------------------------------------------------------------
+-- Imagens no chat (rodar uma vez se a tabela já existia só com texto)
+-- ---------------------------------------------------------------------------
+alter table public.chat_messages
+  add column if not exists image_url text;
+
+alter table public.chat_messages drop constraint if exists chat_messages_body_len;
+alter table public.chat_messages add constraint chat_messages_body_len check (
+  char_length(body) <= 5000
+  and (char_length(trim(body)) > 0 or image_url is not null)
+);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'chat-images',
+  'chat-images',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists chat_images_public_read on storage.objects;
+create policy chat_images_public_read
+  on storage.objects for select
+  to public
+  using (bucket_id = 'chat-images');
+
+drop policy if exists chat_images_auth_insert on storage.objects;
+create policy chat_images_auth_insert
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'chat-images');
+
+drop policy if exists chat_images_auth_update on storage.objects;
+create policy chat_images_auth_update
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'chat-images');
+
+drop policy if exists chat_images_auth_delete on storage.objects;
+create policy chat_images_auth_delete
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'chat-images');
