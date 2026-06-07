@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import Layout from '../../baselayout/Layout';
 import { 
     marcarSessaoRealizada, 
@@ -44,44 +44,60 @@ export default function Agenda() {
   const [valorBusca, setValorBusca] = useState(''); // valor da busca por nome
   const [sessoes, setSessoes] = useState([]); // sessões para busca por nome
 
-  const chaveData = useMemo(() => {
-    // ... (lógica original do useMemo)
-    if (!dataSelecionada || isNaN(dataSelecionada.getTime())) {
-      return new Date().toISOString().split('T')[0];
-    }
-    return dataSelecionada.toISOString().split('T')[0];
-  }, [dataSelecionada]);
+  const loadSeqRef = useRef(0);
 
-  const carregarAgendaDoDia = async (data) => {
-    // ... (lógica original do carregarAgendaDoDia)
-    const dataValida = data || new Date().toISOString().split('T')[0];
-    setLoading(true); 
-    setErro(null); 
+  const formatarChaveDataLocal = (date) => {
+    if (!date || Number.isNaN(date.getTime())) {
+      const hoje = new Date();
+      return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  const chaveData = useMemo(
+    () => formatarChaveDataLocal(dataSelecionada),
+    [dataSelecionada],
+  );
+
+  const removerSessaoLocal = useCallback((sessaoId) => {
+    if (sessaoId == null) return;
+    const id = Number(sessaoId);
+    setTodasSessoesDoDia((prev) => prev.filter((s) => Number(s.sessao_id) !== id));
+    setSessoes((prev) => prev.filter((s) => Number(s.sessao_id) !== id));
+  }, []);
+
+  const carregarAgendaDoDia = useCallback(async (data) => {
+    const dataValida = data || formatarChaveDataLocal(dataSelecionada);
+    const seq = ++loadSeqRef.current;
+    setLoading(true);
+    setErro(null);
     try {
-      let sessoes = [];
+      let rows = [];
       switch (filtroVisualizacao) {
         case 'pendentes':
-          sessoes = await buscarSessoesPendentesPorData(dataValida);
+          rows = await buscarSessoesPendentesPorData(dataValida);
           break;
         case 'realizadas':
-          sessoes = await buscarSessoesRealizadasPorData(dataValida);
+          rows = await buscarSessoesRealizadasPorData(dataValida);
           break;
         case 'canceladas':
-          sessoes = await buscarSessoesCanceladasPorData(dataValida);
+          rows = await buscarSessoesCanceladasPorData(dataValida);
           break;
-        default: 
-          sessoes = await buscarSessoesPendentesPorData(dataValida);
+        default:
+          rows = await buscarSessoesPendentesPorData(dataValida);
       }
-      setTodasSessoesDoDia(Array.isArray(sessoes) ? sessoes : []);
+      if (seq !== loadSeqRef.current) return;
+      setTodasSessoesDoDia(Array.isArray(rows) ? rows : []);
     } catch (error) {
+      if (seq !== loadSeqRef.current) return;
       const errorMessage = error.message || "Falha ao carregar a agenda.";
-      setErro(errorMessage); 
-      notifyError(errorMessage); 
-      setTodasSessoesDoDia([]); 
+      setErro(errorMessage);
+      notifyError(errorMessage);
+      setTodasSessoesDoDia([]);
     } finally {
-      setLoading(false); 
+      if (seq === loadSeqRef.current) setLoading(false);
     }
-  };
+  }, [dataSelecionada, filtroVisualizacao]);
 
   // ✅ FUNÇÃO ATUALIZADA PARA CAMPOS SEPARADOS
   const getSessoesAtuais = () => {
@@ -222,10 +238,11 @@ export default function Agenda() {
     }
     try {
       await marcarSessaoRealizada(sessao.sessao_id);
+      removerSessaoLocal(sessao.sessao_id);
       notifySuccess("Sessão realizada com sucesso!"); 
       setModalRealizadaOpen(false);
       setSessaoSelecionada(null);
-      carregarAgendaDoDia(chaveData);
+      await carregarAgendaDoDia(chaveData);
     } catch (error) {
       const errorMessage = error.message || 'Falha ao marcar sessão como realizada';
       console.error('Erro ao marcar sessão como realizada:', error);
@@ -242,10 +259,11 @@ export default function Agenda() {
     }
     try {
       await cancelarSessao(sessao.sessao_id, motivo || 'Cancelado pelo tatuador');
+      removerSessaoLocal(sessao.sessao_id);
       notifySuccess("Sessão cancelada com sucesso."); // Trocado de Warn para Success
       setModalCancelarOpen(false);
       setSessaoSelecionada(null);
-      carregarAgendaDoDia(chaveData);
+      await carregarAgendaDoDia(chaveData);
     } catch (error) {
       const errorMessage = error.message || 'Falha ao cancelar sessão';
       console.error('Erro ao cancelar sessão:', error);
@@ -331,7 +349,7 @@ export default function Agenda() {
     // Se não há valor no campo de nome, buscar por data
     console.log('Carregando agenda do dia...');
     carregarAgendaDoDia(chaveData);
-  }, [chaveData, filtroVisualizacao]); // Removido filtroBusca e valorBusca
+  }, [chaveData, filtroVisualizacao, carregarAgendaDoDia]); // Removido filtroBusca e valorBusca
 
   // useEffect separado para busca por nome (com debounce)
   useEffect(() => {
