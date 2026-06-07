@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu, User, Calendar, Image, LayoutDashboard, Users, LogOut, Camera, Home, MessageCircle } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
+import { useChatNotifications } from "../context/ChatNotificationsContext";
 
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth(); // 👈 usa o logout do provider
+  const { hasUnread } = useChatNotifications();
   
   const handleLinkClick = () => {
     if (open) {
@@ -110,7 +112,16 @@ export default function Sidebar() {
             className={getNavLinkClass}
             onClick={handleLinkClick}
           >
-            <MessageCircle className="w-5 h-5 mr-3" /> Mensagens
+            <span className="relative mr-3 shrink-0">
+              <MessageCircle className="w-5 h-5" />
+              {hasUnread ? (
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-black"
+                  aria-hidden
+                />
+              ) : null}
+            </span>
+            Mensagens
           </NavLink>
 
           <NavLink 

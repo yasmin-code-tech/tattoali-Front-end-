@@ -7,18 +7,25 @@ export function isSupabaseConfigured() {
   return Boolean(url && anonKey);
 }
 
-/** Cliente PostgREST/Realtime autenticado com o mesmo JWT do login TattooAli. */
+/**
+ * Cliente Supabase com JWT do login TattooAli.
+ * REST usa `accessToken`; Realtime exige setAuth antes de subscribe (só header não basta).
+ */
 export function createSupabaseAuthed(accessToken) {
   if (!url || !anonKey) {
     throw new Error("Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env");
   }
   return createClient(url, anonKey, {
-    global: {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    },
+    accessToken: async () => accessToken,
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   });
+}
+
+/** Autentica o WebSocket Realtime com o mesmo JWT (obrigatório para postgres_changes + RLS). */
+export async function ensureSupabaseRealtimeAuth(supabase, accessToken) {
+  if (!accessToken || !supabase?.realtime?.setAuth) return;
+  await supabase.realtime.setAuth(accessToken);
 }

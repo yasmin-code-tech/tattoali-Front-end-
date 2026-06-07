@@ -16,6 +16,7 @@ import GeradorImagem from "./pages/GeradorImagem/GeradorImagem";
 import Galeria from "./pages/Galeria/Galeria";
 import Home from "./pages/Home";
 import ChatProfileSync from "./components/ChatProfileSync";
+import { ChatNotificationsProvider } from "./context/ChatNotificationsContext";
 import ChatLayout from "./pages/Chat/ChatLayout";
 import ChatIndex from "./pages/Chat/ChatIndex";
 import ChatConversa from "./pages/Chat/ChatConversa";
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
+        <ChatNotificationsProvider>
         <ChatProfileSync />
         <Routes>
 
@@ -46,6 +48,14 @@ export default function App() {
           />
           <Route
             path="/alterar-senha"
+            element={
+              <PublicOnlyRoute>
+                <AlterarSenha />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
             element={
               <PublicOnlyRoute>
                 <AlterarSenha />
@@ -83,6 +93,7 @@ export default function App() {
           pauseOnHover
           theme="dark" 
         />
+        </ChatNotificationsProvider>
       </AuthProvider>
     </Router>
   );

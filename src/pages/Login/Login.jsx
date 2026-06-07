@@ -21,7 +21,7 @@ export default function Login() {
   useEffect(() => {
     const accessToken = searchParams.get('access-token') || searchParams.get('access_token') || searchParams.get('accessToken') || searchParams.get('token');
     if (accessToken) {
-      navigate(`/reset-password?access-token=${encodeURIComponent(accessToken)}`, { replace: true });
+      navigate(`/alterar-senha?access-token=${encodeURIComponent(accessToken)}`, { replace: true });
     }
   }, [searchParams, navigate]);
 
